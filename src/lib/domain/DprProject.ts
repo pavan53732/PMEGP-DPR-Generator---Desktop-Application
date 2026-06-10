@@ -4,6 +4,8 @@ export interface DprMetadata {
   id: string;
   schemaVersion: string;
   workbookVersion: string;
+  formulaVersion: string;
+  projectionVersion: string;
   formulaRegistryHash: string;
   fieldRegistryHash: string;
   projectionProfileVersion: string;
@@ -33,6 +35,8 @@ export class DprProjectFactory {
         id: uuidv4(),
         schemaVersion: '1.0',
         workbookVersion: '1.0',
+        formulaVersion: '1.0',
+        projectionVersion: '1.0',
         formulaRegistryHash: 'unknown', // Set dynamically based on runtime hashes
         fieldRegistryHash: 'unknown',
         projectionProfileVersion: '2024-A',

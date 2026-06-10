@@ -51,9 +51,9 @@ export class SQLiteManager {
       )
     `);
 
-    // 2. Audit Logs Table
+    // 2. Project Versions Table
     await this.db.exec(`
-      CREATE TABLE IF NOT EXISTS audit_logs (
+      CREATE TABLE IF NOT EXISTS project_versions (
         id TEXT PRIMARY KEY,
         project_id TEXT NOT NULL,
         version_number INTEGER NOT NULL,
@@ -63,16 +63,49 @@ export class SQLiteManager {
       )
     `);
 
-    // 3. Exports Table
+    // 3. Audit Logs Table
+    await this.db.exec(`
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL,
+        action TEXT NOT NULL,
+        old_value TEXT,
+        new_value TEXT,
+        formula_registry_hash TEXT NOT NULL,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (project_id) REFERENCES projects (id)
+      )
+    `);
+
+    // 4. Workbook Fingerprints Table
+    await this.db.exec(`
+      CREATE TABLE IF NOT EXISTS workbook_fingerprints (
+        hash TEXT PRIMARY KEY,
+        version_name TEXT NOT NULL,
+        schema_mapping TEXT NOT NULL,
+        is_supported INTEGER NOT NULL
+      )
+    `);
+
+    // 5. Exports Table
     await this.db.exec(`
       CREATE TABLE IF NOT EXISTS exports (
         id TEXT PRIMARY KEY,
         project_id TEXT NOT NULL,
         export_type TEXT NOT NULL,
+        project_version_snapshot INTEGER NOT NULL,
         formula_hash TEXT NOT NULL,
         pdf_path TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (project_id) REFERENCES projects (id)
+      )
+    `);
+
+    // 6. Settings Table
+    await this.db.exec(`
+      CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
       )
     `);
   }
@@ -119,16 +152,21 @@ export class SQLiteManager {
       now
     ]);
 
-    // Insert into audit logs for versioning
-    // We get the current version count
-    const row = await this.db.get('SELECT COUNT(*) as count FROM audit_logs WHERE project_id = ?', [project.metadata.id]);
+    // Insert into project_versions for history
+    const row = await this.db.get('SELECT COUNT(*) as count FROM project_versions WHERE project_id = ?', [project.metadata.id]);
     const versionNumber = (row.count || 0) + 1;
     
     const { v4: uuidv4 } = require('uuid');
     await this.db.run(`
-      INSERT INTO audit_logs (id, project_id, version_number, data_payload)
+      INSERT INTO project_versions (id, project_id, version_number, data_payload)
       VALUES (?, ?, ?, ?)
     `, [uuidv4(), project.metadata.id, versionNumber, payloadText]);
+    
+    // Insert into audit logs
+    await this.db.run(`
+      INSERT INTO audit_logs (id, project_id, action, formula_registry_hash)
+      VALUES (?, ?, ?, ?)
+    `, [uuidv4(), project.metadata.id, 'SAVE_PROJECT', project.metadata.formulaRegistryHash]);
   }
 
   public async getProject(id: string): Promise<DprProject | null> {

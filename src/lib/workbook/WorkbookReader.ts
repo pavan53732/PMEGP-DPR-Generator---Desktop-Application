@@ -38,13 +38,11 @@ export class WorkbookReader {
 
       const ws = wb.Sheets['DataSheet'];
       
-      // Determine compatibility status (mock fingerprint check for now)
-      // In a real scenario, hash the formula structures.
-      const status = this.determineCompatibility(ws);
-      if (status === WorkbookCompatStatus.BLOCKED) {
+      const validation = this.validateStructure(wb, ws);
+      if (validation.status === WorkbookCompatStatus.BLOCKED) {
         return {
-          status,
-          message: 'Unsupported Workbook Version: The structural fingerprint of this workbook is entirely unknown.',
+          status: validation.status,
+          message: validation.message,
         };
       }
 
@@ -63,9 +61,10 @@ export class WorkbookReader {
       }
 
       return {
-        status,
-        message: status === WorkbookCompatStatus.WARN ? 'Imported with warnings (Minor diffs detected)' : 'Import successful',
+        status: validation.status,
+        message: validation.status === WorkbookCompatStatus.WARN ? 'Imported with warnings (Minor structural diffs detected)' : 'Import successful',
         dataPayload: payload,
+        fingerprint: validation.fingerprint,
       };
 
     } catch (err: any) {
@@ -76,16 +75,35 @@ export class WorkbookReader {
     }
   }
 
-  private static determineCompatibility(ws: XLSX.WorkSheet): WorkbookCompatStatus {
-    // Phase 1: Only official DPRPACKAGE.xls templates are supported.
-    // In the future, this will cross-reference `workbook_fingerprints` DB table.
-    
-    // Simple heuristic: check if expected labels exist
-    const b8 = ws['B8']?.v;
-    if (String(b8).includes('Name of the Applicant')) {
-      return WorkbookCompatStatus.SUPPORTED;
+  private static validateStructure(wb: XLSX.WorkBook, ws: XLSX.WorkSheet): { status: WorkbookCompatStatus, message: string, fingerprint?: string } {
+    // 1. Verify sheet names and count
+    const requiredSheets = ['DataSheet', 'DPR_print', 'Project_Report', 'Application_form'];
+    for (const sheetName of requiredSheets) {
+      if (!wb.SheetNames.includes(sheetName)) {
+        return { status: WorkbookCompatStatus.BLOCKED, message: `Missing required sheet: ${sheetName}` };
+      }
     }
     
-    return WorkbookCompatStatus.BLOCKED;
+    if (wb.SheetNames.length < 5) {
+       return { status: WorkbookCompatStatus.BLOCKED, message: 'Invalid sheet count. Expected at least 5 sheets.' };
+    }
+
+    // 2. Verify Workbook Version & Fingerprint (Heuristic)
+    const b8 = ws['B8']?.v;
+    if (!String(b8).includes('Name of the Applicant')) {
+      return { status: WorkbookCompatStatus.BLOCKED, message: 'Structural mismatch: Expected Applicant Name at B8.' };
+    }
+
+    // 3. Verify Required Ranges & Formula Signatures
+    // E.g. Check if Total Project Cost formula exists in DataSheet!H53
+    const h53 = ws['H53'];
+    if (!h53 || !h53.f) {
+      return { status: WorkbookCompatStatus.WARN, message: 'Warning: Missing standard formula signature for Project Cost. Import allowed but flagged.', fingerprint: 'UNKNOWN_HASH_WARNING' };
+    }
+
+    // Known structural fingerprint hash logic would be computed here
+    const fingerprint = 'HASH_VALID_PMEGP_V1';
+
+    return { status: WorkbookCompatStatus.SUPPORTED, message: 'Valid structure', fingerprint };
   }
 }
