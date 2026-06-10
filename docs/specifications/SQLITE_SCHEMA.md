@@ -13,7 +13,7 @@ Stores the active DPR projects.
 - `status` (Enum: DRAFT, FINALIZED, EXPORTED)
 - `schema_version` (String)
 - `workbook_version` (String)
-- `data_payload` (JSONB) — The core schema data map.
+- `data_payload` (TEXT) — The core schema data map, stored as JSON string.
 - `created_at` (Timestamp)
 - `updated_at` (Timestamp)
 
@@ -22,7 +22,7 @@ Historical snapshots of a project for undo/restore functionality.
 - `id` (UUID, Primary Key)
 - `project_id` (UUID, Foreign Key)
 - `version_number` (Int)
-- `data_payload` (JSONB)
+- `data_payload` (TEXT)
 - `created_at` (Timestamp)
 
 ## 3. Table: `audit_logs`

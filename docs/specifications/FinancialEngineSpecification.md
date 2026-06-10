@@ -4,14 +4,14 @@ This document defines the exact formulas and assumptions for the 5-year Enhanced
 
 ## 1. Assumptions & Growth Rates
 
-| Parameter | Assumption | Source |
-|-----------|------------|--------|
-| **Project Life** | 5 Years | Standard Bank Requirement |
-| **Capacity Utilization** | Y1: 60%, Y2: 70%, Y3: 80%, Y4: 90%, Y5: 100% | Standard Manufacturing Norm |
-| **Revenue Growth** | Proportional to Capacity Utilization + 5% Annual Inflation | User Configurable |
-| **Raw Material Growth** | Proportional to Capacity Utilization + 4% Annual Inflation | User Configurable |
-| **Salary Growth** | 5% Annual Increment | User Configurable |
-| **Power & Overheads Growth** | 5% Annual Increment | User Configurable |
+| Parameter | Value | Classification | Source |
+|-----------|-------|----------------|--------|
+| **Project Life** | 5 Years | MANDATORY | Standard Bank Requirement |
+| **Capacity Utilization** | Y1: 60%, Y2: 70%, Y3: 80%, Y4: 90%, Y5: 100% | DEFAULT | Standard Manufacturing Norm |
+| **Revenue Growth** | Proportional to Capacity + 5% Inflation | USER CONFIGURABLE | User input |
+| **Raw Material Growth** | Proportional to Capacity + 4% Inflation | USER CONFIGURABLE | User input |
+| **Salary Growth** | 5% Annual Increment | USER CONFIGURABLE | User input |
+| **Power & Overheads Growth** | 5% Annual Increment | USER CONFIGURABLE | User input |
 
 ## 2. Depreciation Schedules (WDV Method)
 
