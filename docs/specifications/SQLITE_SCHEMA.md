@@ -6,6 +6,10 @@ The `pmegp_dpr_pro.sqlite` database acts as the single source of truth for the l
 Stores the active DPR projects.
 - `id` (UUID, Primary Key)
 - `name` (String, e.g., "M/S Bakery Industries")
+- `applicant_name` (String)
+- `district` (String)
+- `activity_type` (String)
+- `project_cost` (Numeric)
 - `status` (Enum: DRAFT, FINALIZED, EXPORTED)
 - `schema_version` (String)
 - `workbook_version` (String)
@@ -28,6 +32,7 @@ Immutable ledger of crucial financial application changes.
 - `action` (String)
 - `old_value` (JSON)
 - `new_value` (JSON)
+- `formula_registry_hash` (String)
 - `timestamp` (Timestamp)
 
 ## 4. Table: `workbook_fingerprints`
@@ -44,6 +49,7 @@ Tracks generated PDFs and their precise inputs for legal/banking auditability.
 - `file_path` (String)
 - `export_type` (Enum: PMEGP_APPLICATION, PROJECT_AT_A_GLANCE, FULL_DPR)
 - `project_version_snapshot` (Int)
+- `formula_registry_hash` (String)
 - `generated_at` (Timestamp)
 
 ## 6. Table: `settings`

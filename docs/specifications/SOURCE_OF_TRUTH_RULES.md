@@ -33,3 +33,9 @@ Level 5: The User Interface (React / Wizard)
 5. **Layer Strictness**
    - **Layer 1 (Parity Engine):** Must only use the logic found in the original workbook.
    - **Layer 2 (Pro Engine):** May introduce new accounting logic (DSCR, ROI), but must explicitly tag these outputs as "Pro" and must never overwrite Layer 1 base costs.
+
+6. **No Reverse Mapping**
+   - The UI cannot create or define the schema.
+   - The Domain Model cannot create or define the schema.
+   - The Schema must strictly originate from the generated `FieldRegistry_FULL.json`.
+   - The only valid flow is: `Workbook -> Registry -> Schema`.

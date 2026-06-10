@@ -14,7 +14,10 @@ The application uses the `.dpr` file format for portable saving, sharing, and im
     "workbookVersion": "DPRPACKAGE.xls (v2023)",
     "schemaVersion": "1.0.0",
     "formulaVersion": "1.0.0",
-    "projectionVersion": "1.0.0"
+    "projectionVersion": "1.0.0",
+    "projectionProfileVersion": "1.0.0",
+    "fieldRegistryHash": "abc123def456",
+    "formulaRegistryHash": "xyz987uvw654"
   },
   "project": {
     "uuid": "123e4567-e89b-12d3-a456-426614174000",
@@ -28,7 +31,7 @@ The application uses the `.dpr` file format for portable saving, sharing, and im
     "workingCapital": { ... },
     "termLoan": { ... }
   },
-  "financialOverrides": {
+  "layer2Assumptions": {
     "capacityUtilization": [60, 70, 80, 90, 100],
     "revenueGrowthRate": 5,
     "salaryGrowthRate": 5
