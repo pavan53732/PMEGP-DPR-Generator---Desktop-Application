@@ -1,0 +1,4258 @@
+# 🏗️ DPR GUIDE PRO — APPLICATION BLUEPRINT
+## For Kilo Code CLI AI Agent — Build Step-by-Step
+
+## Platform
+
+Desktop-only Windows application.
+
+| Attribute | Value |
+|-----------|-------|
+| **Target OS** | Windows 10 / Windows 11 |
+| **Runtime** | Electron |
+| **UI Framework** | Next.js 16 |
+| **Language** | TypeScript |
+| **Styling** | Tailwind CSS 4 + shadcn/ui |
+| **State** | Zustand |
+| **Excel Export** | ExcelJS |
+| **AI SDK** | OpenAI SDK (Electron main process only — user provides API key) |
+| **Installer** | NSIS (via electron-builder) |
+| **Output** | `DPR-Guide-Pro-Setup-{version}.exe` (NSIS installer) |
+
+This application is desktop-only. No web deployment is supported.
+
+> **Style**: Windows 11 native app — frameless window, Mica/Acrylic effects, rounded corners  
+> **Theme**: Emerald green primary, dark/light mode, professional government scheme feel  
+
+---
+
+## 📐 ARCHITECTURE OVERVIEW
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│  DPR GUIDE PRO — Windows Desktop Application                        │
+│                                                                      │
+│  ┌─ Electron Main Process ──────────────────────────────────────┐   │
+│  │  • Window management (frameless, custom titlebar)            │   │
+│  │  • System tray icon                                          │   │
+│  │  • Native file dialogs (save/load DPR, export Excel)         │   │
+│  │  • Windows notifications                                     │   │
+│  │  • IPC bridge to renderer                                    │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                              │ IPC                                   │
+│  ┌─ Electron Renderer (Next.js) ───────────────────────────────┐   │
+│  │                                                              │   │
+│  │  ┌──────────┐  ┌──────────────────────────────────────────┐ │   │
+│  │  │          │  │ ╔═══ CUSTOM TITLEBAR ══════════════════╗ │ │   │
+│  │  │          │  │ ║ 🏠 DPR Guide Pro   ─ □ ✕  (Windows) ║ │ │   │
+│  │  │  LEFT    │  │ ╚═══════════════════════════════════════╝ │ │   │
+│  │  │  NAV     │  ├──────────────────────────────────────────┤ │   │
+│  │  │          │  │                                          │ │   │
+│  │  │  • Home  │  │         MAIN CONTENT AREA                │ │   │
+│  │  │  • Form  │  │                                          │ │   │
+│  │  │  • AI    │  │  (Changes based on selected nav item)    │ │   │
+│  │  │  • Report│  │                                          │ │   │
+│  │  │  • Settng│  │                                          │ │   │
+│  │  │          │  ├──────────────────────────────────────────┤ │   │
+│  │  │          │  │  AI Assistant Chat Panel (Collapsible)   │ │   │
+│  │  └──────────┘  └──────────────────────────────────────────┘ │   │
+│  │  ┌──────────────────────────────────────────────────────────┐│   │
+│  │  │  Footer: PMEGP Info | Version | © 2026 | 📁 Save/Load  ││   │
+│  │  └──────────────────────────────────────────────────────────┘│   │
+│  └──────────────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🇮🇳 PMEGP KNOWLEDGE BASE — Complete Scheme Reference (Updated 2026)
+
+> **CRITICAL**: This section contains the COMPLETE PMEGP scheme knowledge from official KVIC sources, PMEGP Guidelines 2022 (revised Dec 2023), and 14+ live web sources. The AI assistant and app logic MUST reference this for ALL calculations, validations, suggestions, and user guidance. This is a FREE app for PMEGP applicants — the AI must be a TRUSTED ADVISOR, not just a form-filler.
+
+---
+
+### 1. Scheme Overview
+
+| Attribute | Detail |
+|-----------|--------|
+| **Full Name** | Prime Minister's Employment Generation Programme |
+| **Launched** | 15 August 2008 (from the Red Fort by PM) |
+| **Ministry** | Ministry of Micro, Small and Medium Enterprises (MoMSME) |
+| **Nodal Agency** | KVIC (Khadi and Village Industries Commission), Mumbai |
+| **Type** | Central Sector Scheme (100% Govt of India funded, credit-linked subsidy) |
+| **Nature** | NOT a direct loan — it's a SUBSIDY on a bank loan |
+| **Current Period** | FY 2021-22 to FY 2025-26 (5 years) |
+| **Budget Allocation** | ₹13,500 crore for 2021-26 period |
+| **Target** | Generate sustainable employment in rural & urban areas |
+| **Sector** | Non-farm sector — micro enterprises only |
+| **Official Portal** | kviconline.gov.in/pmegpeportal |
+| **JanSamarth Portal** | jansamarth.in |
+| **KVIC EDP Training** | training.kvic.gov.in |
+| **Online EDP** | udyami.org.in |
+| **CGTMSE Portal** | cgtmse.in |
+
+**🔑 KEY INSIGHT FOR AI**: PMEGP is NOT a direct loan. The bank lends money, and the government gives a subsidy (called "Margin Money") that covers 15% to 35% of project cost. This Margin Money is routed through the bank, held in the borrower's account/TDR during a 3-year lock-in, then adjusted (written off) against the loan after physical verification. During lock-in, the borrower's liability is the FULL sanctioned amount. The AI MUST explain this clearly to every user.
+
+---
+
+### 2. History & Evolution
+
+| Period | Event |
+|--------|-------|
+| **Pre-2008** | Two separate schemes: REGP (Rural Employment Generation Programme) + PMRY (Pradhan Mantri Rozgar Yojana) |
+| **2008** | PMEGP launched by merging REGP + PMRY |
+| **2008-2012** | Initial phase — limits: Manufacturing ₹25 Lakh, Service ₹10 Lakh |
+| **2012-2022** | Extended. Limits increased: Manufacturing ₹50 Lakh, Service ₹20 Lakh |
+| **2021-22** | Continued for another 5 years (FY 2021-22 to FY 2025-26) |
+| **Dec 2023** | Revised guidelines — 2nd loan, transgender category, aspirational districts, geo-tagging |
+| **2024-25** | Transgender added as Special Category, Aspirational Districts added |
+| **2025-26** | Current operational year. Subsidy rates unchanged at 15%-35% |
+
+---
+
+### 3. Objectives
+
+1. Generate continuous and sustainable employment in Rural and Urban areas
+2. Facilitate participation of financial institutions for higher credit flow to micro sector
+3. Promote self-employment among traditional artisans, unemployed youth
+4. Set up new micro-enterprises in non-farm sector
+5. Provide backward and forward linkages — awareness, training, exhibitions, EDP
+
+---
+
+### 4. Eligibility Criteria — COMPLETE
+
+#### 4.1 Who CAN Apply
+
+> Per official PMEGP FAQ: beneficiaries include **individuals, institutions, co-operative societies, SHGs, and trusts**.
+
+| Category | Eligible? | Notes |
+|----------|-----------|-------|
+| **Individuals (above 18 years)** | ✅ YES | No income ceiling |
+| **Institutions** (under Societies Registration Act 1860) | ✅ YES | |
+| **Co-operative Societies** | ✅ YES | |
+| **Self Help Groups (SHGs)** | ✅ YES | |
+| **Trusts** (Charitable Trusts etc.) | ✅ YES | |
+
+#### 4.2 Who CANNOT Apply
+
+- ❌ PMEGP is for **new units only** — the only exception is 2nd loan for existing PMEGP/REGP/MUDRA units (upgradation)
+- ❌ Existing units that already availed Govt subsidy under other State/Central schemes
+- ❌ Units in the **Negative List** (see Section 9)
+- ❌ Applicants who already availed PMEGP/REGP/MUDRA subsidy (except 2nd loan for upgradation)
+- ❌ One applicant = one project only (cannot submit multiple projects)
+- ❌ **Family definition**: Self and Spouse — only ONE project per family
+
+#### 4.3 Age & Education
+
+| Parameter | Rule |
+|-----------|------|
+| **Minimum Age** | 18 years (no upper limit) |
+| **Income Ceiling** | No income ceiling |
+| **Education (Mfg >₹10L)** | 8th Standard Pass mandatory |
+| **Education (Svc >₹5L)** | 8th Standard Pass mandatory |
+| **Education (≤₹10L Mfg / ≤₹5L Svc)** | No minimum qualification |
+
+#### 4.4 Special Category Beneficiaries (Enhanced Subsidy)
+
+| # | Category | Code in DPR |
+|---|----------|-------------|
+| 1 | **SC** (Scheduled Caste) | M70=1 |
+| 2 | **ST** (Scheduled Tribe) | M70=2 |
+| 3 | **OBC** (Other Backward Class) | M70=3 |
+| 4 | **PHC** (Differently Abled) | M70=4 |
+| 5 | **Ex-Serviceman** | M70=5 |
+| 6 | **Minority** | M70=6 |
+| 7 | **Hill & Border Area** (notified by Govt) | M70=7 |
+| 8 | **Aspirational Districts** | M70=8 |
+| 9 | **General** (General Category — MALE ONLY) | M70=9 |
+
+> 🔴 **CRITICAL GOTCHA — Women = Special Category ALWAYS!** Women are classified as Special Category regardless of their social category (SC/ST/OBC/General). In the Excel template, if Gender=Female (M55=2), the applicant automatically gets Special Category subsidy rates even if M70=9 (General). **Transgender (M55=3) also gets Special Category rates.** The AI MUST proactively tell users: "As a woman, you automatically qualify for Special Category subsidy — even if your social category is General!"
+
+---
+
+### 5. Maximum Project Cost & Loan Limits
+
+#### 5.1 First Loan (New Enterprise)
+
+| Sector | Maximum Project Cost | Maximum Subsidy Amount |
+|--------|---------------------|----------------------|
+| **Manufacturing** | **₹50,00,000** (₹50 Lakh) | ₹17.50 Lakh (35% of ₹50L) |
+| **Service/Business** | **₹20,00,000** (₹20 Lakh) | ₹7.00 Lakh (35% of ₹20L) |
+
+#### 5.2 Second Loan (Upgradation of Existing Unit)
+
+| Sector | Maximum Project Cost | Maximum Subsidy |
+|--------|---------------------|----------------|
+| **Manufacturing** | **₹1,00,00,000** (₹1 Crore) | ₹15.00 Lakh (general) / ₹20.00 Lakh (NER & Hill) |
+| **Service/Business** | **₹25,00,000** (₹25 Lakh) | ₹3.75 Lakh (general) / ₹5.00 Lakh (NER & Hill) |
+
+#### 5.3 If Project Cost Exceeds Limits
+
+> If the total project cost exceeds ₹50 Lakh (manufacturing) or ₹20 Lakh (service), the **balance credit can be availed from banks WITHOUT any Government subsidy**. Only the portion up to the limit gets subsidy. The AI MUST warn users about this.
+
+#### 5.4 Components of Project Cost
+
+| Component | Type |
+|-----------|------|
+| Capital Expenditure (Term Loan) | Building, Machinery, Equipment |
+| Working Capital | Raw materials, operating expenses |
+| **Total Project Cost** | = Capital Expenditure + Working Capital |
+
+**Own Contribution is NOT added on top** — it's a PERCENTAGE OF the project cost:
+| Category | Own Contribution | Bank Finance |
+|----------|-----------------|-------------|
+| General Male | 10% of Project Cost | 90% of Project Cost |
+| Special Category | 5% of Project Cost | 95% of Project Cost |
+
+> ⚠️ **Cost of LAND CANNOT be included** in the project cost (FAQ #2, KVIC). This is a COMMON MISTAKE — the AI must flag this!
+
+**Example**: If Building = ₹10L + Machinery = ₹25L + Working Capital = ₹15L, then **Project Cost = ₹50L**. Own Contribution (5%) = ₹2.5L. Bank Finance (95%) = ₹47.5L. Own Contribution is DERIVED from project cost, NOT added to it.
+
+---
+
+### 6. Subsidy Rates — DEEP DIVE
+
+#### 6.1 Complete Subsidy Matrix
+
+| Category | Location | Own Contribution | Subsidy Rate | Bank Finance |
+|----------|----------|-----------------|--------------|-------------|
+| **General** (Male only) | Urban | 10% | **15%** | 90% |
+| **General** (Male only) | Rural | 10% | **25%** | 90% |
+| **Special** (SC/ST/OBC/Women/Minority/Ex-Svc/PH/Transgender/NER/Hill/Border/Aspirational) | Urban | 5% | **25%** | 95% |
+| **Special** | Rural | 5% | **35%** | 95% |
+
+#### 6.2 Subsidy Decision Tree (Decoded from Excel Cell G87)
+```
+IF Location = Urban (M64=2):
+    IF Gender = Male (M55=1) AND Category = General (M70=9): 15%
+    ELSE: 25%
+IF Location = Rural (M64=1):
+    IF Gender = Male (M55=1) AND Category = General (M70=9): 25%
+    ELSE: 35%
+```
+
+#### 6.3 Own Contribution Formula (Cell G85)
+```
+IF Gender = Male (M55=1) AND Category = General (M70=9): 10%
+ELSE: 5%
+```
+
+#### 6.4 Subsidy Calculation Examples — THE AI MUST SHOW THESE!
+
+**Example 1: General Male, Urban, Manufacturing**
+- Project Cost: ₹25,00,000
+- Own Contribution: 10% = ₹2,50,000
+- Subsidy (Margin Money): 15% = ₹3,75,000
+- Bank Loan (Sanctioned): ₹22,50,000 (90%)
+- Net Liability After Lock-In: ₹18,75,000 (Bank Loan − Margin Money, after 3-yr lock-in + verification)
+
+**Example 2: SC Male, Rural, Manufacturing**
+- Project Cost: ₹50,00,000
+- Own Contribution: 5% = ₹2,50,000
+- Subsidy (Margin Money): 35% = ₹17,50,000
+- Bank Loan (Sanctioned): ₹47,50,000 (95%)
+- Net Liability After Lock-In: ₹30,00,000 (Bank Loan − Margin Money, after 3-yr lock-in + verification)
+
+**Example 3: OBC Woman, Urban, Service**
+- Project Cost: ₹15,00,000
+- Own Contribution: 5% = ₹75,000
+- Subsidy (Margin Money): 25% = ₹3,75,000
+- Bank Loan (Sanctioned): ₹14,25,000 (95%)
+- Net Liability After Lock-In: ₹10,50,000 (Bank Loan − Margin Money, after 3-yr lock-in + verification)
+
+**Example 4: General Female, Rural, Manufacturing** ⭐
+- Project Cost: ₹40,00,000
+- Own Contribution: **5%** (she's female = Special Category!)
+- Subsidy (Margin Money): **35%** (Rural + Special) = ₹14,00,000
+- Bank Loan (Sanctioned): ₹38,00,000 (95%)
+- **Net Liability After Lock-In: ₹24,00,000** (after 3-yr lock-in + physical verification)
+
+#### 6.5 Maximum Subsidy Amounts (Practical Caps) — AI MUST WARN ABOUT THESE
+
+| Scenario | Project Cost | Subsidy % | Max Subsidy |
+|----------|-------------|-----------|-------------|
+| Manufacturing, Special, Rural | ₹50 Lakh | 35% | **₹17.50 Lakh** |
+| Manufacturing, General, Rural | ₹50 Lakh | 25% | **₹12.50 Lakh** |
+| Manufacturing, Special, Urban | ₹50 Lakh | 25% | **₹12.50 Lakh** |
+| Manufacturing, General, Urban | ₹50 Lakh | 15% | **₹7.50 Lakh** |
+| Service, Special, Rural | ₹20 Lakh | 35% | **₹7.00 Lakh** |
+| Service, General, Rural | ₹20 Lakh | 25% | **₹5.00 Lakh** |
+| Service, Special, Urban | ₹20 Lakh | 25% | **₹5.00 Lakh** |
+| Service, General, Urban | ₹20 Lakh | 15% | **₹3.00 Lakh** |
+
+---
+
+### 7. How the Subsidy Math ACTUALLY Works — CRITICAL EXPLANATION
+
+> **THE #1 CONFUSION**: Most people think: Project = Own + Loan + Subsidy (3 parts). **WRONG!**
+
+The subsidy is **PART of the bank loan**, not separate:
+
+```
+Project Cost = ₹50,00,000
+Own Contribution = 5% = ₹2,50,000 (you pay this)
+Bank Sanctions = 95% = ₹47,50,000 (full sanctioned amount)
+
+The bank loan of ₹47,50,000 INCLUDES:
+  - Margin Money (Subsidy) = 35% = ₹17,50,000 (routed through bank, held in account/TDR during lock-in)
+  - Net Liability After Lock-In = ₹47,50,000 - ₹17,50,000 = ₹30,00,000
+
+IMPORTANT: During the 3-year lock-in, the borrower's LIABILITY is the FULL ₹47,50,000.
+The Margin Money is held by the bank in a TDR/lock-in — it is NOT immediately deducted.
+Only AFTER 3-year lock-in + physical verification + geo-tagging:
+  → IA issues "MM Adjustment Letter"
+  → Bank adjusts (writes off) the Margin Money from the loan
+  → Borrower's net liability becomes ₹30,00,000
+  → Borrower repays only ₹30,00,000
+```
+
+**🔑 AI MUST EXPLAIN**: "You pay ₹2.5L from your pocket. Bank sanctions ₹47.5L. ₹17.5L of that is government Margin Money, held by the bank in a TDR/lock-in for 3 years. During lock-in, your liability is the full ₹47.5L. After 3 years + physical verification, the Margin Money is adjusted and written off. Your net liability becomes ₹30L. This is how PMEGP makes your project affordable!"
+
+---
+
+### 8. Interest Rate & Loan Repayment
+
+#### 8.1 Interest Rate
+- **Not fixed by PMEGP** — charged at **prevailing bank rates**
+- **Typical range: 8% to 14%** depending on bank, category, and scheme
+- **SBI, Bank of Baroda, PSU banks**: usually 8-10% (lower rates)
+- **Private banks** (HDFC, ICICI): usually 10-14%
+- Some banks offer **concessional rates** for PMEGP beneficiaries
+- **AI should suggest**: "For best rates, approach SBI or your nearest PSU bank"
+
+#### 8.2 Repayment Schedule
+
+| Parameter | Value |
+|-----------|-------|
+| **Repayment Frequency** | Quarterly |
+| **Tenure** | 3-7 years |
+| **Moratorium** | As per bank (typically 6-12 months) |
+| **Interest during moratorium** | May be capitalized or serviced |
+
+#### 8.3 EMI Calculation (From Excel PMT Formula)
+
+```
+EMI = PMT(annual_rate/12, months, -loan_amount)
+```
+
+Example: ₹30,00,000 loan at 11% for 7 years:
+- Monthly EMI = PMT(11%/12, 84, -3000000) = **₹51,571/month**
+
+---
+
+### 9. Negative List — Activities NOT Allowed (with REASONS)
+
+#### 9.1 Completely Prohibited
+
+| # | Activity | Reason |
+|---|----------|--------|
+| 1 | **Meat processing/canning/serving** (slaughtered meat) | Socio-religious sensitivity |
+| 2 | **Beedi/Paan/Cigar/Cigarette** manufacturing or sale | Health hazards |
+| 3 | **Hotels/Dhabas serving liquor** | Intoxicant items |
+| 4 | **Tobacco preparation** as raw material | Health hazards |
+| 5 | **Toddy tapping** for sale | Intoxicant |
+| 6 | **Polythene carry bags < 75 microns** | Environmental concerns (Ministry of Environment rule) |
+| 7 | **Recycled plastic containers** for food storage | Health/environment |
+| 8 | **Cultivation of crops/plantation** (Tea, Coffee, Rubber) | Agricultural exclusion |
+| 9 | **Sericulture** (cocoon rearing — basic) | Agricultural exclusion |
+| 10 | **Horticulture / Floriculture** (basic cultivation) | Agricultural exclusion |
+| 11 | **Animal Husbandry** (basic rearing) | Agricultural exclusion |
+| 12 | Activities **prohibited by local authorities** | Legal compliance |
+| 13 | **Pashmina Wool hand spinning/hand weaving** | Comes under Khadi Certification |
+| 14 | **Rural Transport** (except specific exceptions) | Not village industry |
+
+#### 9.2 ALLOWED with Conditions (Complete Exceptions List)
+
+| Activity | Conditions |
+|----------|-----------| 
+| **Non-vegetarian food** at Hotels/Dhabas (WITHOUT liquor) | ✅ Allowed |
+| **Value addition** under Tea/Coffee/Rubber (e.g., coffee processing, tea packaging) | ✅ Allowed |
+| **Off-farm/Farm-linked activities** in sericulture/horticulture/floriculture | ✅ Allowed |
+| **Dairy** (cows, sheep, goats, camels, buffaloes) | ✅ Allowed |
+| **Poultry** (chickens, turkeys, geese, ducks) | ✅ Allowed |
+| **Aquaculture** (fish, molluscs, crustaceans, aquatic plants) | ✅ Allowed |
+| **Insects** (Bees, Sericulture) | ✅ Allowed |
+| **Piggery** | ✅ NER states only (North Eastern Region) |
+| **Auto rickshaws** | ✅ A&N Islands and NER only (CNG only, Chief Secretary approval required) |
+| **House boats / Tourist boats** | ✅ A&N Islands and J&K only |
+
+> 🔴 **AI MUST CHECK**: When user enters a business name/description, AI should check against this Negative List and warn immediately with the reason.
+
+---
+
+### 10. Common Mistakes & Rejection Reasons — AI MUST PROACTIVELY WARN
+
+| # | Mistake | How to Avoid | AI Action |
+|---|---------|-------------|-----------|
+| 1 | **Applying for existing unit** | Only NEW units eligible (except 2nd loan for existing PMEGP/REGP/MUDRA units) | Warn if user mentions existing business |
+| 2 | **Including land cost** in project cost | Land cost NOT allowed | Flag any "land" line item in cost breakdown |
+| 3 | **Wrong category selection** (M55, M56, M70) | Double-check gender + category | Auto-verify: if Female + General → still Special Category |
+| 4 | **Project cost exceeds limit** | Max ₹50L (Mfg), ₹20L (Svc) | Show warning when cost exceeds limit |
+| 5 | **Negative list activity** | Check Section 9 carefully | Warn immediately on business name entry |
+| 6 | **Multiple applications** | One project per family (self + spouse) | Remind user of family rule |
+| 7 | **Not completing EDP training** | Mandatory for >₹2L projects | Show EDP requirement based on project cost |
+| 8 | **Poor CIBIL score** | Check before applying | Advise: "Check your CIBIL score first" |
+| 9 | **Incomplete documentation** | Upload all required certificates | Show document checklist per category |
+| 10 | **Per capita investment exceeds limit** | ≤₹3L (plain) / ₹4.5L (hilly) per worker | Validate employment vs investment ratio |
+
+---
+
+### 11. Collateral & CGTMSE — KNOW YOUR RIGHTS!
+
+#### 11.1 Collateral-Free Loans
+
+| Project Cost | Collateral Required? |
+|-------------|---------------------|
+| Up to ₹10 Lakh | **No collateral** (RBI mandate — banks CANNOT insist) |
+| ₹10 Lakh to ₹50 Lakh | CGTMSE guarantee available |
+| Above ₹50 Lakh | Collateral may be required by bank |
+
+#### 11.2 CGTMSE (Credit Guarantee Fund Trust for Micro and Small Enterprises)
+
+- Provides **guarantee cover** for collateral-free loans up to **₹2 Crore**
+- Guarantee coverage: **75% to 85%** of the loan amount
+- PMEGP loans up to ₹50 Lakh are covered under CGTMSE
+- The guarantee fee is paid by the **lending bank** (not you!)
+- **RBI has mandated** that banks must NOT ask for collateral for loans up to ₹10 Lakh
+
+> 🔴 **AI MUST TELL USERS**: "If your project is up to ₹10 Lakh, banks CANNOT ask for collateral. For projects up to ₹2 Crore, INSIST on CGTMSE coverage — don't let the bank force you to give property as collateral!"
+
+---
+
+### 12. Lock-in Period & Subsidy Adjustment — The Complete Process
+
+#### 12.1 Lock-in Period
+- **3 years** from the date of Margin Money claim
+- During lock-in, the subsidy amount is held as a deposit — you CANNOT withdraw it
+- After lock-in + physical verification, subsidy is adjusted (written off) against loan
+
+#### 12.2 Subsidy Adjustment Process (7 Steps — AI Must Walk Users Through This)
+
+```
+Step 1: Bank sanctions loan (90% or 95% of project cost)
+Step 2: You deposit own contribution (5% or 10%)
+Step 3: Bank disburses loan
+Step 4: Bank claims Margin Money (subsidy) from KVIC/IA
+Step 5: Margin Money deposited in your loan account
+Step 6: Lock-in period of 3 years begins
+Step 7: After 3 years + successful physical verification + geo-tagging:
+   → IA issues "MM Adjustment Letter" to the bank
+   → Bank writes off the subsidy amount from your loan
+   → You now repay only the remaining loan amount
+```
+
+#### 12.3 Physical Verification & Geo-tagging (2023 Mandate)
+- Conducted by Implementing Agency (KVIC/KVIB/DIC)
+- Must confirm unit is operational and viable
+- **Geo-tagging of the unit is done** (mandatory since Dec 2023)
+- If unit is NOT operational, subsidy must be **REMITTED BACK** to the government
+
+#### 12.4 What If Unit Fails During Lock-in?
+- If you close the unit before 3 years → **Subsidy must be returned** to government
+- If Margin Money withdrawn before 3 years → Subsidy must be returned
+- Bank will remit back the Margin Money to KVIC
+
+---
+
+### 13. EDP Training Requirements
+
+| Project Cost | EDP Duration | Mandatory? |
+|-------------|-------------|------------|
+| Up to ₹2 Lakh | — | **NOT mandatory** |
+| ₹2 Lakh to ₹5 Lakh | **5 working days** | ✅ Mandatory |
+| Above ₹5 Lakh | **10 working days** | ✅ Mandatory |
+
+**Training Centers:**
+- 582+ RSETI/RUDSETI training centers across India
+- KVIC training centers (training.kvic.gov.in)
+- **Online EDP training available at udyami.org.in** (accepted since 2023 revision)
+- EDP training is **FREE of cost** for PMEGP beneficiaries
+- Must complete EDP **BEFORE** Margin Money claim through PMEGP e-portal
+- EDP certificate must be submitted to bank/IA
+- **2nd loan**: EDP training NOT mandatory
+
+---
+
+### 14. 2nd Loan (Upgradation) Rules — Dec 2023 Addition
+
+#### 14.1 Eligibility
+
+| Condition | Requirement |
+|-----------|-------------|
+| **Existing unit type** | Must be PMEGP / REGP / MUDRA unit |
+| **Performance** | Unit must be performing well |
+| **Repayment** | Must have repaid 1st loan installments on time |
+| **Physical verification** | Must have been completed |
+| **Lock-in** | 1st loan lock-in period must be completed |
+| **Purpose** | Upgradation, expansion, modernization |
+
+#### 14.2 2nd Loan Subsidy Rates
+
+| Category | Subsidy Rate |
+|----------|-------------|
+| **All Categories** (General + Special) | **15%** of project cost |
+| **NER & Hill States** | **20%** of project cost |
+
+#### 14.3 Key Conditions
+- Building construction: max **25% of project cost** or **60%** of 2nd loan
+- CGTMSE guarantee available up to ₹2 Crore
+- Same bank should ideally finance both 1st and 2nd loan
+- EDP training **not mandatory** for 2nd loan
+
+---
+
+### 15. Application Process — 12 Steps (AI Must Guide Users Through This)
+
+1. **Visit PMEGP e-Portal**: kviconline.gov.in/pmegpeportal
+2. **Check Eligibility**: Use the eligibility checker
+3. **Aadhaar Authentication**: Validate Aadhaar details online
+4. **Register**: Generate User ID and Password
+5. **Fill Application Form**: Select "Online Application for Individual" or "Non-Individual"
+6. **Enter Details**: Personal info, project details, cost, finance, sales, expenses
+7. **Upload Documents**: Photo, certificates, project report
+8. **Submit**: Application goes to concerned implementing agency (KVIC/KVIB/DIC)
+9. **Track**: Use e-Tracking system (FIFS — First In First Served)
+10. **Bank Forwarding**: If approved by IA, forwarded to bank
+11. **Bank Sanction**: Bank processes and sanctions loan
+12. **Disbursement**: Bank disburses loan + subsidy claim filed by bank
+
+**Alternative Portal**: JanSamarth (jansamarth.in) — also provides eligibility check and subsidy calculator
+
+---
+
+### 16. Required Documents — Complete Checklist
+
+| Document | Required? | When |
+|----------|-----------|------|
+| **Aadhaar Card** | ✅ Mandatory | Always |
+| **PAN Card** | ✅ Mandatory | Always |
+| **Passport Size Photo** | ✅ Mandatory | Always |
+| **Educational Qualification Certificate** | ✅ If project > ₹10L (Mfg) / ₹5L (Svc) | Conditional |
+| **Caste Certificate** | ✅ For SC/ST/OBC claims | If claiming category |
+| **Special Category Certificate** | ✅ For PH/Ex-Serviceman/Minority | If claiming category |
+| **Project Report / DPR** | ✅ Mandatory | Always (THIS APP HELPS CREATE THIS!) |
+| **Address Proof** | ✅ Mandatory | Always |
+| **Bank Account Details** | ✅ Mandatory | Always |
+| **Rural/Urban Certificate** | ✅ From revenue authority | Always |
+| **Land/Building Ownership Proof** | ✅ If own premises | If own building |
+| **Rental Agreement** | ✅ If rented premises | If rented |
+
+---
+
+### 17. Implementing Agencies & Financial Agencies
+
+#### 17.1 Implementing Agencies (where you apply)
+
+| Agency | Coverage | Rural/Urban Ratio |
+|--------|----------|-------------------|
+| **KVIC** (State Directorates) | Rural areas | 30% |
+| **KVIB** (State Khadi & Village Industries Boards) | Rural areas | 30% |
+| **DIC** (District Industries Centres) | Urban + Rural | 40% |
+| **Coir Board** | Coir-based projects | Special |
+
+#### 17.2 Financial Agencies (Banks — where you get the loan)
+
+- All **Public Sector Banks** (SBI, PNB, Bank of Baroda, etc.) — **BEST RATES**
+- **Regional Rural Banks (RRBs)**
+- **Co-operative Banks** (RBI regulated)
+- **SIDBI**
+- **Private Scheduled Commercial Banks** (HDFC, ICICI, Axis, etc.) — approved by SLMC
+
+> **AI SHOULD SUGGEST**: "For best interest rates, approach SBI or your nearest PSU bank. They typically offer 8-10% for PMEGP loans."
+
+---
+
+### 18. Employment Criteria & Rural/Urban Definitions
+
+#### 18.1 Employment Generation Norms
+
+| Area | Per Capita Investment Limit |
+|------|---------------------------|
+| **Plain Areas** | Fixed capital investment ≤ **₹3.00 Lakh** per full-time worker |
+| **Hilly Areas, A&N Islands, Lakshadweep** | Fixed capital investment ≤ **₹4.50 Lakh** per full-time worker |
+
+#### 18.2 Rural vs Urban Definition
+- **Rural**: Any area classified as Village per revenue record + all areas under Panchayat Raj Institutions
+- **Urban**: Areas NOT classified as rural. Implemented ONLY through DIC in urban areas
+
+---
+
+### 19. PMEGP vs Other Schemes — AI Must Recommend Best Scheme!
+
+#### 19.1 PMEGP vs MUDRA (PMMY)
+
+| Feature | PMEGP | MUDRA (PMMY) |
+|---------|-------|--------------|
+| **Type** | Subsidy on bank loan | Direct bank loan (NO subsidy) |
+| **Max Loan** | ₹50L (Mfg) / ₹20L (Svc) | ₹10 Lakh (Tarun) |
+| **Subsidy** | 15%-35% | **None** |
+| **Own Contribution** | 5%-10% | Not mandatory |
+| **Collateral** | Free up to ₹10L (CGTMSE up to ₹2Cr) | Free up to ₹10L |
+| **New/Existing** | New units only | New + Existing |
+| **EDP Training** | Mandatory (for >₹2L) | Not mandatory |
+| **Processing Time** | Longer (IA + bank) | Faster (bank-only) |
+| **Best For** | New businesses needing SUBSIDY | Small loans up to ₹10L, fast |
+
+#### 19.2 PMEGP vs Stand-Up India
+
+| Feature | PMEGP | Stand-Up India |
+|---------|-------|----------------|
+| **Target** | All categories | SC/ST + Women entrepreneurs |
+| **Max Loan** | ₹50L | ₹1 Crore |
+| **Subsidy** | 15%-35% | No subsidy, but lower interest |
+| **Repayment** | 3-7 years | Up to 7 years |
+
+#### 19.3 Which Scheme Should You Choose? (AI Decision Guide)
+
+| Your Situation | Best Scheme |
+|---------------|-------------|
+| New business, need SUBSIDY | **PMEGP** ✅ |
+| Small loan up to ₹10L, fast processing | **MUDRA** |
+| SC/ST/Woman, need ₹10L-1Cr | **Stand-Up India** |
+| Existing business, need collateral-free loan | **CGTMSE** |
+| New business + MAXIMUM government support | **PMEGP** ✅ (best overall) |
+
+---
+
+### 20. Key Changes in Revised Guidelines 2023 — MUST USE THESE RULES
+
+| Change | Old Rule | New Rule (2023+) |
+|--------|----------|----------|
+| **2nd Loan** | Not available | Available for PMEGP/REGP/MUDRA upgradation |
+| **2nd Loan Max (Mfg)** | N/A | ₹1 Crore |
+| **2nd Loan Max (Svc)** | N/A | ₹25 Lakh |
+| **2nd Loan Subsidy** | N/A | 15% (20% for NER/Hill) |
+| **Transgender Category** | Not included | Added as Special Category |
+| **Aspirational Districts** | Not included | Added as Special Category |
+| **Geo-tagging** | Not mandatory | **Mandatory** for physical verification |
+| **Online EDP** | Physical only | Online + Physical both accepted |
+| **CGTMSE coverage** | Up to ₹50L | Up to **₹2 Crore** |
+| **Polythene thickness** | 20 microns | **75 microns** (updated) |
+| **Implementation period** | FY 2012-22 | FY 2021-26 |
+
+**What Stayed Same**: Subsidy rates (15/25/35%), own contribution (5/10%), max project cost for 1st loan, agency ratios (30:30:40), lock-in period (3 years), age limit (18 years)
+
+---
+
+### 21. Scheme Performance Statistics — Build User Confidence!
+
+| Metric | Cumulative Figure (Since 2008) |
+|--------|-------------------------------|
+| **Margin Money Released** | ₹20,000+ Crore |
+| **Projects Supported** | 8,00,000+ |
+| **Employment Generated** | 70,00,000+ (70 Lakh+) |
+
+**Year-Wise Performance:**
+
+| Financial Year | Margin Money (₹ Cr) | Projects | Employment |
+|---------------|---------------------|----------|------------|
+| 2021-22 | ~2,800 | 1,03,000+ | 7,50,000+ (record!) |
+| 2022-23 | ~3,000 | 90,000+ | 7,00,000+ |
+| 2023-24 | ~3,200 | 95,000+ | 7,20,000+ |
+| 2024-25 | ~2,500 (RE) | 75,000+ | 5,50,000+ |
+| 2025-26 | Current year | In progress | In progress |
+
+> **AI SHOULD TELL USERS**: "70 Lakh+ people have already benefited from PMEGP since 2008, with over ₹20,000 Crore in subsidies released. This is a proven, well-funded government scheme!"
+
+---
+
+### 22. Financial Model Architecture — For App Calculations
+
+#### 22.1 Capacity Utilization (5-Year Projection)
+
+| Year | Utilization |
+|------|------------|
+| Year 1 | 70% |
+| Year 2 | 80% |
+| Year 3 | 90% |
+| Year 4 | 90% |
+| Year 5 | 90% |
+
+#### 22.2 Depreciation Rates
+
+| Asset | Method | Rate |
+|-------|--------|------|
+| Building | Straight Line (SLN) | 5% per annum |
+| Machinery | Written Down Value (WDV) | 15% per annum |
+| Furniture & Fixtures | WDV | 10% per annum |
+
+#### 22.3 Key Financial Ratios (Calculated in DPR_print sheet)
+
+| Ratio | Formula | Purpose |
+|-------|---------|---------| 
+| **DSCR** | Net Cash Accrual / Total Debt Service | Loan repayment capacity (must be >1.5) |
+| **Break-Even Point** | Fixed Costs / (Sales - Variable Costs) × 100 | Minimum sales needed |
+| **ROI** | Net Profit / Total Investment × 100 | Profitability measure |
+| **Current Ratio** | Current Assets / Current Liabilities | Liquidity measure |
+| **Debt-Equity Ratio** | Total Debt / Total Equity | Leverage measure |
+
+#### 22.4 Payback Period
+- Standard: 5 years
+- Implementation Period: Project-specific (user enters value; common range 6–24 months)
+
+---
+
+### 23. Excel Code Tables — Cell References in DataSheet
+
+#### Category Codes (M70)
+| Code | Display Label | Excel Label | Subsidy Type |
+|------|--------------|-------------|-------------|
+| 1 | SC (Scheduled Caste) | SC | Special |
+| 2 | ST (Scheduled Tribe) | ST | Special |
+| 3 | OBC (Other Backward Class) | OBC | Special |
+| 4 | PHC (Differently Abled) | PHC | Special |
+| 5 | Ex-Serviceman | Ex-Serviceman | Special |
+| 6 | Minority | Minority | Special |
+| 7 | Hill & Border Area | Hill Boarder Area | Special |
+| 8 | Aspirational Districts | Aspirational Districts | Special |
+| 9 | General | General | General (only if Male) |
+
+#### Gender Codes (M55)
+| Code | Gender |
+|------|--------|
+| 1 | Male |
+| 2 | Female |
+| 3 | Transgender |
+
+#### Location Codes (M64)
+| Code | Location |
+|------|----------|
+| 1 | Rural |
+| 2 | Urban |
+
+#### Sponsoring Agency Codes (M59)
+| Code | Agency |
+|------|--------|
+| 1 | KVIC |
+| 2 | KVIB |
+| 3 | DIC |
+| 4 | Coir Board |
+
+#### Sector Codes (M80)
+| Code | Sector | Max Project Cost (1st Loan) | Max Project Cost (2nd Loan) |
+|------|--------|---------------------------|---------------------------|
+| 1 | Manufacturing | ₹50 Lakh | ₹1 Crore |
+| 2 | Service | ₹20 Lakh | ₹25 Lakh |
+
+#### Qualification Lookup (L83:L89, selected by M83)
+| Index | Qualification |
+|-------|--------------|
+| 1 | Under 8th |
+| 2 | 8th Pass |
+| 3 | 10th Pass |
+| 4 | 12th Pass |
+| 5 | Graduate |
+| 6 | Post Graduate |
+| 7 | PhD |
+
+#### Building Ownership (L91:L93, selected by M91)
+| Index | Type |
+|-------|------|
+| 1 | Own |
+| 2 | Rented |
+| 3 | Leased |
+
+---
+
+### 24. Excel #REF! Errors (10 broken formulas to handle)
+
+| Sheet | Cell | Issue | App Fix |
+|-------|------|-------|---------|
+| Project_Report | G14 | Father's/Spouse's Name reference broken | Add Father's Name field |
+| Project_Report | J20 | State reference broken | Add State dropdown |
+| Project_Report | H21 | Phone reference broken | Add Phone field |
+| Project_Report | H22 | Email reference broken | Add Email field |
+| DPR_FRONT | B33 | Prepared By name broken | Add Prepared By field |
+| DPR_FRONT | B35 | Agency broken | Add Agency field |
+| DPR_FRONT | B36 | Address broken | Add Address field |
+| DPR_FRONT | B37 | City reference broken | Add City field |
+| DPR_FRONT | F37 | State reference broken | Add State dropdown |
+
+The app MUST provide its own input fields for: father's name, phone, email, state dropdown, prepared-by info, and city.
+
+---
+
+### 25. Excel Formula Nuances — Technical Accuracy
+
+#### 25.1 Cell L25 vs G87 Subsidy Formula
+
+Cell L25 has a M59 (Coir Board) check that doesn't actually affect the subsidy rate. The **real** formula is in G87:
+```
+=IF(M64=2, IF(AND(M55=1,M70=9), 15%, 25%), IF(AND(M55=1,M70=9), 25%, 35%))
+```
+The app should use G87 logic, not L25.
+
+#### 25.2 R57:R60 Reference Tables
+
+| Cell | Formula | Meaning |
+|------|---------|---------|
+| R57 | `=IF(M64=2,IF(AND(M55=1,M70=9),15,25),IF(AND(M55=1,M70=9),25,35))` | Full subsidy rate |
+| R58 | `=IF(AND(M55=1,M70=9,M64=2),15,25)` | Urban General Male = 15%, else 25% |
+| R59 | `=IF(AND(M55=1,M64=1,M70=9),35,25)` | **BUG in Excel: Returns 35% for Rural General Male, but should be 25%. The values are SWAPPED — correct formula should be `=IF(AND(M55=1,M64=1,M70=9),25,35)`. Our app MUST use the correct G87 formula, NOT R59.** |
+| R60 | `=IF(AND(M57=1,M72=9,M66=2),15,0)` | **Likely error** — uses M57/M72/M66 instead of M55/M70/M64 |
+
+---
+
+### 26. Official Sources & References — App Should Link to These
+
+#### Government Portals
+| Source | URL |
+|--------|-----|
+| PMEGP e-Portal | kviconline.gov.in/pmegpeportal |
+| JanSamarth Portal | jansamarth.in |
+| myScheme Portal | myscheme.gov.in/schemes/pmegp |
+| MSME Ministry | msme.gov.in |
+| KVIC Official | kvic.gov.in |
+| KVIC FAQ | kviconline.gov.in/pmegpeportal/jsp/FAQ.jsp |
+| KVIC Model Projects | kviconline.gov.in/pmegp/pmegpweb/docs/jsp/newprojectReports.jsp |
+| KVIC EDP Training | training.kvic.gov.in |
+| CGTMSE | cgtmse.in |
+
+#### Official PDF Guidelines
+| Document | URL |
+|----------|-----|
+| PMEGP Guidelines 2022 | kviconline.gov.in/pmegpeportal/dashboard/notification/PMEGP_Guidelines_Certified_2022_3.pdf |
+| Revised Guidelines Dec 2023 | msme.gov.in/sites/default/files/Revisedguidelines07.12.2023.pdf |
+| 2nd Loan Guidelines | msme.gov.in/sites/default/files/final-guidlines-for-2nd-loan.pdf |
+
+---
+
+## 🆕 ADDITIONAL FEATURES FROM DEEP RESEARCH — New Views & Components
+
+> These features are DIRECTLY inspired by the PMEGP deep research. They transform the app from a simple form-filler into a TRUSTED ADVISOR for PMEGP applicants.
+
+### Feature 1: Scheme Comparison Tool (`scheme-comparison-view.tsx`)
+- Interactive comparison: PMEGP vs MUDRA vs Stand-Up India vs CGTMSE
+- Decision tree: "New business? → PMEGP. Quick ₹10L? → MUDRA. SC/ST/Woman ₹10L-1Cr? → Stand-Up India"
+- Side-by-side comparison tables with subsidy amounts, max loan, processing time
+- "Which scheme is best for YOU?" quiz (3 questions → recommendation)
+- Add to sidebar navigation as "📋 Schemes" item
+
+### Feature 2: Rejection Risk Checker (`rejection-checker-view.tsx`)
+- Real-time validation against 10 Common Mistakes (from Section 10 above)
+- Risk Score: Low 🟢 / Medium 🟡 / High 🔴 based on current form data
+- Warnings: land cost included, project cost exceeds limit, negative list activity, wrong category
+- Checklist: "Before you submit, verify these 10 things"
+- Add to sidebar navigation as "🛡️ Check" item
+
+### Feature 3: Application Journey Guide (`application-guide-view.tsx`)
+- 12-step visual guide (from Section 15 above) with progress bar
+- Each step is checkable with status: ✅ Done / 🔄 In Progress / ⬜ Not Started
+- Links to official portals (kviconline.gov.in, jansamarth.in)
+- Document checklist per step (auto-generated from user's category)
+- Timeline estimate for each step
+- Add to sidebar navigation as "🗺️ Journey" item
+
+### Feature 4: Subsidy Calculator with Live Preview (`subsidy-calculator-view.tsx`)
+- Animated subsidy breakdown based on 4 examples (from Section 6.4 above)
+- Visual flow: "You pay ₹2.5L → Bank gives ₹47.5L → Govt writes off ₹17.5L after 3 years → You repay only ₹30L"
+- Slider inputs: Project Cost, Gender, Category, Location → instant subsidy preview
+- Maximum subsidy cap warnings (from Section 6.5 above)
+- Side-by-side comparison: "What if you were General Male vs SC Male?" 
+- Add to sidebar navigation as "💰 Calculator" item
+
+### Feature 5: EDP Training Finder (`edp-training-view.tsx`)
+- Training duration auto-calculated based on project cost
+- Link to 582+ RSETI centers (training.kvic.gov.in)
+- Link to online EDP at udyami.org.in
+- Reminder: "EDP not mandatory for projects up to ₹2 Lakh"
+- Reminder: "Complete EDP BEFORE Margin Money claim"
+- FREE of cost badge
+- Embed in dpr-form-view as a card/section
+
+### Updated Sidebar Navigation
+```
+• 🏠 Home
+• 📝 Form          (DPR form filling)
+• 🤖 AI            (AI assistant chat)
+• 💰 Calculator     (NEW — subsidy calculator)
+• 🛡️ Check         (NEW — rejection risk checker)
+• 📋 Schemes        (NEW — scheme comparison)
+• 🗺️ Journey        (NEW — application guide)
+• 📊 Report         (financial reports)
+• ⚙️ Settings       (AI config, etc.)
+```
+
+### Updated File Structure Additions
+```
+src/components/views/
+├── scheme-comparison-view.tsx    # NEW
+├── rejection-checker-view.tsx    # NEW
+├── application-guide-view.tsx    # NEW
+├── subsidy-calculator-view.tsx   # NEW
+└── edp-training-view.tsx         # NEW
+```
+
+---
+
+## 🗂️ COMPLETE FILE STRUCTURE
+
+```
+my-project/
+├── electron/                              # ELECTRON MAIN PROCESS
+│   ├── main.ts                            # Electron main entry
+│   ├── preload.ts                         # Preload script (IPC bridge)
+│   ├── tray.ts                            # System tray management
+│   ├── ipc-handlers.ts                    # IPC handlers (file save/load, etc.)
+│   ├── excel-export.ts                    # Excel export engine (consumes computed model)
+│   ├── audit-logger.ts                    # Audit logging (DPR_CREATED, EXPORTED, etc.)
+│   └── window.ts                          # Window creation & management
+│
+├── src/                                   # NEXT.JS RENDERER
+│   ├── app/
+│   │   ├── page.tsx                       # Main app (only route!)
+│   │   └── layout.tsx                     # Root layout
+│   │   # No API routes — all AI calls go through Electron IPC
+│   ├── components/
+│   │   ├── app-shell.tsx                  # Main layout wrapper
+│   │   ├── titlebar.tsx                   # ⭐ CUSTOM WINDOWS TITLEBAR
+│   │   ├── sidebar.tsx                    # Left navigation
+│   │   ├── ai-chat-panel.tsx             # Collapsible AI chat
+│   │   ├── views/
+│   │   │   ├── dashboard-view.tsx
+│   │   │   ├── dpr-form-view.tsx
+│   │   │   ├── ai-assistant-view.tsx
+│   │   │   ├── report-view.tsx
+│   │   │   ├── settings-view.tsx
+│   │   │   ├── scheme-comparison-view.tsx    # NEW — PMEGP vs MUDRA vs Stand-Up India
+│   │   │   ├── rejection-checker-view.tsx    # NEW — 10-point rejection risk checker
+│   │   │   ├── application-guide-view.tsx    # NEW — 12-step application journey
+│   │   │   ├── subsidy-calculator-view.tsx   # NEW — live subsidy calculator
+│   │   │   └── edp-training-view.tsx         # NEW — EDP training finder
+│   │   ├── form-sections/
+│   │   │   ├── applicant-info.tsx
+│   │   │   ├── project-details.tsx
+│   │   │   ├── cost-of-project.tsx
+│   │   │   ├── sales-revenue.tsx
+│   │   │   ├── expenses.tsx
+│   │   │   ├── working-capital.tsx
+│   │   │   └── financial-params.tsx
+│   │   └── report-sections/
+│   │       ├── project-at-glance.tsx
+│   │       ├── cost-breakdown.tsx
+│   │       ├── means-of-finance.tsx
+│   │       ├── loan-repayment.tsx
+│   │       ├── depreciation.tsx
+│   │       ├── profit-loss.tsx
+│   │       ├── balance-sheet.tsx
+│   │       ├── cash-flow.tsx
+│   │       ├── dscr.tsx
+│   │       └── break-even.tsx
+│   ├── hooks/
+│   │   └── use-electron.ts               # ⭐ Hook for Electron IPC calls
+│   ├── store/
+│   │   ├── dpr-store.ts                  # Zustand store for DPR form data (persist to localStorage, auto-save timer, example data loader)
+│   │   ├── ui-store.ts                   # Zustand store for UI state (active view, sidebar, theme)
+│   │   └── ai-store.ts                   # Zustand store for AI chat state (messages, loading)
+│   └── lib/
+│       ├── pmegp-rules.ts                 # ⭐ PMEGP scheme rules engine
+│       ├── dpr-calculations.ts            # ⭐ Financial calculation engine — ONLY place calculations happen
+│       ├── dpr-types.ts                   # Type definitions + DPR schema versioning
+│       ├── ai-system-prompt.ts            # AI system prompt (uses prompt-builder.ts)
+│       ├── format-currency.ts             # ₹ Indian formatting
+│       ├── report-generator.ts            # ⭐ HTML report generation for PDF export (DPRData → print-ready HTML)
+│       ├── example-data.ts                # ⭐ Pre-filled example DPR data for new users (Manufacturing, Rural, SC Male)
+│       ├── formula-registry.ts            # ⭐ Single source of truth for ALL PMEGP formulas
+│       ├── errors.ts                      # ⭐ Error taxonomy (AppErrorCode enum + AppError class)
+│       ├── validation/                    # ⭐ Validation engine — separate layer before calculation
+│       │   ├── index.ts                   # runAllValidations() + re-exports
+│       │   ├── pmegp-validator.ts         # PMEGP-specific rules
+│       │   ├── category-validator.ts      # Gender + category + location cross-checks
+│       │   ├── project-cost-validator.ts  # Max limits, per capita investment
+│       │   ├── subsidy-validator.ts       # Subsidy rate + Margin Money validation
+│       │   ├── negative-list-validator.ts # Activity classification check
+│       │   └── dpr-file-validator.ts      # Schema version + data integrity on load
+│       └── ai/                            # ⭐ AI assistant architecture
+│           ├── prompt-builder.ts          # Version-controlled system prompt construction
+│           ├── conversation-manager.ts    # Conversation history, token counting, truncation
+│           ├── context-compressor.ts      # Compresses long DPR data for AI context
+│           ├── ai-error-handler.ts        # Retry logic, rate limiting, failure recovery
+│           └── token-budget.ts            # Token budget rules
+│
+├── build/                                 # ELECTRON BUILDER ASSETS
+│   ├── icon.ico                           # ⭐ Windows app icon (256x256)
+│   ├── installer-banner.bmp              # NSIS installer banner
+│   ├── installer-sidebar.bmp             # NSIS installer sidebar
+│   └── entitlements.mac.plist            # (Mac only, not needed)
+│
+├── public/
+│   ├── dpr-logo.png                       # ✅ ALREADY GENERATED
+│   ├── dpr-hero.png                       # ✅ ALREADY GENERATED
+│   └── dpr-icons.png                      # ✅ ALREADY GENERATED
+│
+├── electron-builder.yml                   # ⭐ Electron Builder config
+├── next.config.ts                         # Modified for Electron
+├── package.json                           # Updated with Electron scripts
+└── tsconfig.json                          # Updated with Electron paths
+```
+
+---
+
+## 📦 PHASE 0: ELECTRON SETUP & CONFIGURATION (DO THIS FIRST!)
+
+### Step 0.1: Install Electron Dependencies
+
+```bash
+bun add -d electron electron-builder concurrently wait-on tsup
+bun add exceljs           # For Excel file generation/export
+bun add openai            # ⭐ OpenAI SDK — used in Electron main process ONLY (ipc-handlers.ts)
+# NOTE: Do NOT install electron-next (unmaintained, doesn't support Next.js 16)
+# NOTE: Do NOT install @electron/remote (unnecessary — we use IPC instead)
+```
+
+### Step 0.2: Update `package.json`
+
+Add these scripts and build configuration:
+
+```json
+{
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build:electron": "tsup",
+    "dev:electron": "concurrently \"bun run dev\" \"bun run build:electron --watch\" \"wait-on http://localhost:3000 && electron .\"",
+    "build": "next build && bun run build:electron && electron-builder",
+    "build:win": "next build && bun run build:electron && electron-builder --win",
+    "lint": "next lint"
+  },
+  // NOTE: Build configuration is in electron-builder.yml (do NOT duplicate here)
+  // electron-builder.yml takes precedence, and having both causes confusion
+}
+```
+
+### Step 0.2b: Create `tsup.config.ts` — Electron TypeScript Build
+
+This compiles all `electron/*.ts` files into `dist-electron/*.js` so Electron can load them. Without this step, the `.exe` will NOT build because Electron cannot run TypeScript directly.
+
+```typescript
+// tsup.config.ts — Compiles electron/*.ts → dist-electron/*.js
+import { defineConfig } from 'tsup';
+
+export default defineConfig({
+  entry: [
+    'electron/main.ts',
+    'electron/preload.ts',
+    'electron/ipc-handlers.ts',
+    'electron/tray.ts',
+    'electron/window.ts',
+    'electron/excel-export.ts',
+    'electron/audit-logger.ts',
+  ],
+  outDir: 'dist-electron',
+  format: 'cjs',           // Electron requires CommonJS
+  platform: 'node',
+  target: 'node18',
+  splitting: false,
+  sourcemap: true,
+  clean: true,
+  external: ['electron', 'exceljs', 'openai'],  // Don't bundle these
+});
+```
+
+### Step 0.3: Create `electron-builder.yml`
+
+```yaml
+appId: com.dprguide.pro
+productName: DPR Guide Pro
+copyright: Copyright © 2026 DPR Guide Pro
+
+directories:
+  buildResources: build
+  output: dist
+
+win:
+  icon: build/icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+        - ia32
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: DPR Guide Pro
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  artifactName: DPR-Guide-Pro-Setup-${version}.${ext}
+
+files:
+  - dist-electron/**/*
+  - .next/**/*
+  - public/**/*
+  - package.json
+
+asar: true
+
+npmRebuild: false
+
+extraResources:
+  - from: public/
+    to: public/
+```
+
+### Step 0.4: Create `electron/main.ts` — The Electron Main Process
+
+```typescript
+// electron/main.ts
+import { app, BrowserWindow, ipcMain, dialog, Notification, Tray, Menu } from 'electron';
+import * as path from 'path';
+import { setupIPCHandlers } from './ipc-handlers';
+import { createTray } from './tray';
+
+let mainWindow: BrowserWindow | null = null;
+let tray: Tray | null = null;
+
+const isDev = !app.isPackaged;
+
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 1400,
+    height: 900,
+    minWidth: 1024,
+    minHeight: 700,
+    frame: false,                    // ⭐ FRAMELESS — custom titlebar
+    transparent: false,
+    backgroundColor: '#ffffff',
+    titleBarStyle: 'hidden',         // For macOS (optional)
+    trafficLightPosition: { x: 16, y: 16 }, // macOS buttons position
+    icon: path.join(__dirname, '../build/icon.ico'),
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,   // ⭐ Security: sandbox enabled — all renderer access via preload IPC only
+    },
+    // Windows 11 style: rounded corners, snap layout support
+    autoHideMenuBar: true,
+    show: false,                     // Show when ready (no flash)
+  });
+
+  // Load Next.js app
+  if (isDev) {
+    mainWindow.loadURL('http://localhost:3000');
+    // mainWindow.webContents.openDevTools(); // Uncomment for debugging
+  } else {
+    mainWindow.loadFile(path.join(__dirname, '../out/index.html'));
+  }
+
+  // Windows 11 snap layouts support (shows snap on maximize button hover)
+  mainWindow.on('maximize', () => {
+    mainWindow?.webContents.send('window-state-changed', 'maximized');
+  });
+  mainWindow.on('unmaximize', () => {
+    mainWindow?.webContents.send('window-state-changed', 'normal');
+  });
+  mainWindow.on('minimize', () => {
+    mainWindow?.webContents.send('window-state-changed', 'minimized');
+  });
+
+  // Graceful show
+  mainWindow.once('ready-to-show', () => {
+    mainWindow?.show();
+    mainWindow?.focus();
+  });
+
+  // Minimize to tray instead of closing
+  mainWindow.on('close', (event) => {
+    if (tray && !isQuitting) {
+      event.preventDefault();
+      mainWindow?.hide();
+    }
+  });
+}
+
+let isQuitting = false;
+
+app.whenReady().then(() => {
+  createWindow();
+  setupIPCHandlers();
+  tray = createTray(mainWindow!);
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    } else {
+      mainWindow?.show();
+    }
+  });
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+
+app.on('before-quit', () => {
+  isQuitting = true;
+});
+
+export { mainWindow, isQuitting };
+```
+
+### Step 0.5: Create `electron/preload.ts` — IPC Bridge
+
+```typescript
+// electron/preload.ts
+import { contextBridge, ipcRenderer } from 'electron';
+
+contextBridge.exposeInMainWorld('electronAPI', {
+  // Window controls
+  minimize: () => ipcRenderer.invoke('window:minimize'),
+  maximize: () => ipcRenderer.invoke('window:maximize'),
+  close: () => ipcRenderer.invoke('window:close'),
+  isMaximized: () => ipcRenderer.invoke('window:isMaximized'),
+  onWindowStateChange: (callback: (state: string) => void) => {
+    ipcRenderer.on('window-state-changed', (_, state) => callback(state));
+  },
+
+  // File operations
+  saveDPR: (data: string) => ipcRenderer.invoke('file:save-dpr', data),
+  loadDPR: () => ipcRenderer.invoke('file:load-dpr'),
+  exportExcel: (data: string) => ipcRenderer.invoke('file:export-excel', data),
+  exportPDF: (html: string) => ipcRenderer.invoke('file:export-pdf', html),  // ⭐ Uses webContents.printToPDF() in main process
+
+  // Notifications
+  showNotification: (title: string, body: string) =>
+    ipcRenderer.invoke('notification:show', { title, body }),
+
+  // App info
+  getVersion: () => ipcRenderer.invoke('app:version'),
+  getPlatform: () => process.platform,
+
+  // File system
+  selectFolder: () => ipcRenderer.invoke('dialog:select-folder'),
+});
+
+// TypeScript declaration
+export interface ElectronAPI {
+  minimize: () => Promise<void>;
+  maximize: () => Promise<void>;
+  close: () => Promise<void>;
+  isMaximized: () => Promise<boolean>;
+  onWindowStateChange: (callback: (state: string) => void) => void;
+  saveDPR: (data: string) => Promise<string | null>;
+  loadDPR: () => Promise<string | null>;
+  exportExcel: (data: string) => Promise<string | null>;
+  exportPDF: (html: string) => Promise<string | null>;
+  showNotification: (title: string, body: string) => Promise<void>;
+  getVersion: () => Promise<string>;
+  getPlatform: () => string;
+  selectFolder: () => Promise<string | null>;
+}
+
+declare global {
+  interface Window {
+    electronAPI: ElectronAPI;
+  }
+}
+```
+
+### Step 0.6: Create `electron/ipc-handlers.ts`
+
+```typescript
+// electron/ipc-handlers.ts
+import { ipcMain, BrowserWindow, dialog, Notification } from 'electron';
+import * as fs from 'fs';
+import * as path from 'path';
+import { app } from 'electron';
+import { exportDRPToExcel } from './excel-export';  // ⭐ Single authoritative Excel export engine
+
+// ─── Schema Migration (mirrored from dpr-types.ts) ───
+// The migration function lives in dpr-types.ts for the renderer,
+// but the Electron main process needs its own copy since it can't
+// import from src/ (renderer-only, different build pipeline).
+// Keep both copies in sync, or extract to a shared package.
+const CURRENT_SCHEMA_VERSION = 1;
+
+function migrateDPRData(data: any, fromVersion: number): any {
+  let migrated = { ...data };
+  if (fromVersion < 1) {
+    if (migrated.project && !('isNERHill' in migrated.project)) {
+      migrated.project.isNERHill = false;
+    }
+    if (migrated.project && !('noOfEmployees' in migrated.project)) {
+      migrated.project.noOfEmployees = 0;
+    }
+  }
+  return migrated;
+}
+
+export function setupIPCHandlers() {
+
+  // ── Window Controls ──
+  ipcMain.handle('window:minimize', (e) => {
+    BrowserWindow.fromWebContents(e.sender)?.minimize();
+  });
+
+  ipcMain.handle('window:maximize', (e) => {
+    const win = BrowserWindow.fromWebContents(e.sender);
+    if (win?.isMaximized()) {
+      win.unmaximize();
+    } else {
+      win?.maximize();
+    }
+  });
+
+  ipcMain.handle('window:close', (e) => {
+    BrowserWindow.fromWebContents(e.sender)?.close();
+  });
+
+  ipcMain.handle('window:isMaximized', (e) => {
+    return BrowserWindow.fromWebContents(e.sender)?.isMaximized();
+  });
+
+  // ── Save DPR as JSON (with schema versioning) ──
+  ipcMain.handle('file:save-dpr', async (e, data: string) => {
+    const { canceled, filePath } = await dialog.showSaveDialog(
+      BrowserWindow.fromWebContents(e.sender)!,
+      {
+        title: 'Save DPR Data',
+        defaultPath: 'dpr-project-data.json',
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      }
+    );
+    if (!canceled && filePath) {
+      // Wrap raw data in versioned schema
+      const dprFile = {
+        schemaVersion: 1,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        data: JSON.parse(data),
+      };
+      fs.writeFileSync(filePath, JSON.stringify(dprFile, null, 2), 'utf-8');
+      return filePath;
+    }
+    return null;
+  });
+
+  // ── Load DPR from JSON (with schema version check) ──
+  ipcMain.handle('file:load-dpr', async (e) => {
+    const { canceled, filePaths } = await dialog.showOpenDialog(
+      BrowserWindow.fromWebContents(e.sender)!,
+      {
+        title: 'Open DPR Data',
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+        properties: ['openFile'],
+      }
+    );
+    if (!canceled && filePaths.length > 0) {
+      const raw = fs.readFileSync(filePaths[0], 'utf-8');
+      const parsed = JSON.parse(raw);
+      // Versioned format: extract data payload + migrate if needed
+      if (parsed.schemaVersion) {
+        const migratedData = migrateDPRData(parsed.data, parsed.schemaVersion);
+        return JSON.stringify(migratedData);
+      }
+      // Legacy format (no schema version): treat as v0, add missing fields
+      const migratedLegacy = migrateDPRData(parsed, 0);
+      return JSON.stringify(migratedLegacy);
+    }
+    return null;
+  });
+
+  // ── Export DPR as Excel (.xlsx) ──
+  // ⭐ DELEGATES to excel-export.ts — NO inline calculation or workbook construction here.
+  // All Excel generation logic lives in electron/excel-export.ts (the single authoritative export engine).
+  ipcMain.handle('file:export-excel', async (e, data: string) => {
+    const { canceled, filePath } = await dialog.showSaveDialog(
+      BrowserWindow.fromWebContents(e.sender)!,
+      {
+        title: 'Export DPR as Excel',
+        defaultPath: 'DPR-Project-Report.xlsx',
+        filters: [{ name: 'Excel', extensions: ['xlsx'] }],
+      }
+    );
+    if (!canceled && filePath) {
+      const dprData = JSON.parse(data);
+      await exportDRPToExcel(dprData, filePath);
+      return filePath;
+    }
+    return null;
+  });
+
+  // ── Export DPR as PDF ──
+  ipcMain.handle('file:export-pdf', async (e, html: string) => {
+    const { canceled, filePath } = await dialog.showSaveDialog(
+      BrowserWindow.fromWebContents(e.sender)!,
+      {
+        title: 'Export DPR as PDF',
+        defaultPath: 'DPR-Project-Report.pdf',
+        filters: [{ name: 'PDF', extensions: ['pdf'] }],
+      }
+    );
+    if (!canceled && filePath) {
+      // Create a hidden BrowserWindow, load HTML, print to PDF
+      const pdfWin = new BrowserWindow({ width: 800, height: 600, show: false, webPreferences: { sandbox: true } });
+      await pdfWin.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+      const pdfData = await pdfWin.webContents.printToPDF({
+        margins: { top: 0.5, bottom: 0.5, left: 0.5, right: 0.5, marginType: 'inches' },
+        printBackground: true,
+        pageSize: 'A4',
+      });
+      fs.writeFileSync(filePath, pdfData);
+      pdfWin.close();
+      return filePath;
+    }
+    return null;
+  });
+
+  // ── Notifications ──
+  ipcMain.handle('notification:show', (_, { title, body }) => {
+    new Notification({ title, body, icon: path.join(__dirname, '../build/icon.ico') }).show();
+  });
+
+  // ── App Info ──
+  ipcMain.handle('app:version', () => app.getVersion());
+
+  // ── Folder Selection ──
+  ipcMain.handle('dialog:select-folder', async (e) => {
+    const { canceled, filePaths } = await dialog.showOpenDialog(
+      BrowserWindow.fromWebContents(e.sender)!,
+      { properties: ['openDirectory'] }
+    );
+    if (!canceled) return filePaths[0];
+    return null;
+  });
+}
+```
+
+### Step 0.7: Create `electron/tray.ts`
+
+```typescript
+// electron/tray.ts
+import { Tray, Menu, BrowserWindow, app, nativeImage } from 'electron';
+import * as path from 'path';
+import { isQuitting } from './main';
+
+export function createTray(mainWindow: BrowserWindow): Tray {
+  const iconPath = path.join(__dirname, '../build/icon.ico');
+  const trayIcon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
+  const tray = new Tray(trayIcon);
+
+  const contextMenu = Menu.buildFromTemplate([
+    { label: '🟢 Open DPR Guide Pro', click: () => mainWindow.show() },
+    { type: 'separator' },
+    { label: '📝 New DPR', click: () => { mainWindow.show(); mainWindow.webContents.send('action:new-dpr'); } },
+    { type: 'separator' },
+    { label: '❌ Quit', click: () => { isQuitting = true; app.quit(); } },
+  ]);
+
+  tray.setToolTip('DPR Guide Pro — PMEGP Report Builder');
+  tray.setContextMenu(contextMenu);
+
+  tray.on('double-click', () => {
+    mainWindow.show();
+    mainWindow.focus();
+  });
+
+  return tray;
+}
+```
+
+### Step 0.8: Create `electron/window.ts`
+
+```typescript
+// electron/window.ts — Window utilities
+import { BrowserWindow } from 'electron';
+
+export function getWindow(): BrowserWindow | null {
+  return BrowserWindow.getAllWindows()[0] || null;
+}
+```
+
+### Step 0.9: Generate Windows App Icon
+
+Use the existing `dpr-logo.png` to create `build/icon.ico`:
+
+```bash
+# Install icon converter
+bun add -d icon-gen
+
+# Then in a script, convert PNG to ICO:
+npx icon-gen --input public/dpr-logo.png --output build/ --report
+```
+
+Or manually create a 256x256 `.ico` file from `dpr-logo.png` using any online converter, and place it at `build/icon.ico`.
+
+### Step 0.10: Update `next.config.ts` for Electron
+
+```typescript
+// next.config.ts
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
+  output: 'export',    // ⭐ Static export for Electron packaging
+  images: {
+    unoptimized: true, // Required for static export
+  },
+  // Disable server-side features for Electron compatibility
+  trailingSlash: true,
+};
+
+export default nextConfig;
+```
+
+**⚠️ IMPORTANT**: With `output: 'export'`, there are no server-side API routes. ALL backend operations (AI, file I/O, Excel export) go through **Electron IPC**.
+
+**🔴 PROHIBITED under `output: 'export'`** — do NOT use any of these, they will silently break packaging:
+- ❌ API Routes (`app/api/**/route.ts`)
+- ❌ Route Handlers
+- ❌ Next.js Middleware (`middleware.ts`)
+- ❌ Server Actions (`'use server'`)
+- ❌ Dynamic SSR (`getServerSideProps`, dynamic rendering)
+- ❌ Edge Runtime
+- ❌ `next/image` optimizer (use `unoptimized: true` instead)
+- ❌ Incremental Static Regeneration (ISR)
+
+---
+
+## 🔴 ELECTRON IPC HANDLERS — `electron/ipc-handlers.ts`
+
+All backend operations are handled via Electron IPC. Add these IPC handlers:
+
+```typescript
+// ADD to electron/ipc-handlers.ts
+
+import OpenAI from 'openai';
+
+// ─── OpenAI Client Factory ───
+// The API key is stored in app settings (persisted via localStorage on renderer side).
+// When the user configures their API key in Settings, it's passed via IPC config param.
+// If no custom config is provided, falls back to OPENAI_API_KEY env variable.
+
+function createOpenAIClient(config?: { apiKey?: string; baseURL?: string }): OpenAI {
+  return new OpenAI({
+    apiKey: config?.apiKey || process.env.OPENAI_API_KEY,
+    baseURL: config?.baseURL || 'https://api.openai.com/v1',
+  });
+}
+
+// ── AI Chat ──
+ipcMain.handle('ai:chat', async (e, { messages, dprData, config }) => {
+  try {
+    const openai = createOpenAIClient(config);
+    const systemPrompt = getDPRSystemPrompt(dprData);
+
+    const allMessages = [
+      { role: 'system' as const, content: systemPrompt },
+      ...messages,
+    ];
+
+    const completion = await openai.chat.completions.create({
+      model: config?.model || 'gpt-4o',
+      messages: allMessages,
+    });
+
+    return {
+      success: true,
+      response: completion.choices[0]?.message?.content,
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+});
+
+// ── AI Connection Test ──
+ipcMain.handle('ai:test', async (e, config) => {
+  try {
+    const startTime = Date.now();
+    const openai = createOpenAIClient(config);
+
+    const completion = await openai.chat.completions.create({
+      model: config?.model || 'gpt-4o',
+      messages: [
+        { role: 'system' as const, content: 'Reply with exactly: CONNECTION_OK' },
+        { role: 'user' as const, content: 'Test connection' },
+      ],
+    });
+
+    const latencyMs = Date.now() - startTime;
+    return {
+      success: true,
+      message: `Connection successful! Response: ${completion.choices[0]?.message?.content}`,
+      latencyMs,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Connection failed: ${error.message}`,
+      latencyMs: 0,
+    };
+  }
+});
+
+// ── AI Field Suggestion ──
+ipcMain.handle('ai:suggest', async (e, { fieldName, context, projectType }) => {
+  try {
+    const openai = createOpenAIClient();
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system' as const,
+          content: `You are a PMEGP DPR expert. Suggest a realistic value for "${fieldName}" for a ${projectType} unit. Context: ${context}. Reply with ONLY the suggested value, no explanation.`,
+        },
+        { role: 'user' as const, content: `Suggest value for: ${fieldName}` },
+      ],
+    });
+
+    return {
+      success: true,
+      suggestion: completion.choices[0]?.message?.content,
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+});
+```
+
+### Update `electron/preload.ts` — Add AI IPC calls:
+
+```typescript
+// ADD to the contextBridge.exposeInMainWorld in preload.ts:
+
+  // AI operations (via Electron main process)
+  aiChat: (messages: any[], dprData: any, config?: any) =>
+    ipcRenderer.invoke('ai:chat', { messages, dprData, config }),
+  aiTest: (config?: any) => ipcRenderer.invoke('ai:test', config),
+  aiSuggest: (fieldName: string, context: string, projectType: string) =>
+    ipcRenderer.invoke('ai:suggest', { fieldName, context, projectType }),
+```
+
+### Create `src/hooks/use-electron.ts` — React hook for Electron:
+
+```typescript
+// src/hooks/use-electron.ts
+'use client';
+
+import { useState, useCallback } from 'react';
+
+export function useElectron() {
+  const isElectron = typeof window !== 'undefined' && !!window.electronAPI;
+
+  const minimize = useCallback(() => window.electronAPI?.minimize(), []);
+  const maximize = useCallback(() => window.electronAPI?.maximize(), []);
+  const close = useCallback(() => window.electronAPI?.close(), []);
+  const isMaximized = useCallback(() => window.electronAPI?.isMaximized(), []);
+
+  const saveDPR = useCallback(async (data: string) => {
+    if (!isElectron) return null;
+    return window.electronAPI.saveDPR(data);
+  }, [isElectron]);
+
+  const loadDPR = useCallback(async () => {
+    if (!isElectron) return null;
+    return window.electronAPI.loadDPR();
+  }, [isElectron]);
+
+  const exportExcel = useCallback(async (data: string) => {
+    if (!isElectron) return null;
+    return window.electronAPI.exportExcel(data);
+  }, [isElectron]);
+
+  const showNotification = useCallback((title: string, body: string) => {
+    if (isElectron) {
+      window.electronAPI.showNotification(title, body);
+    }
+  }, [isElectron]);
+
+  // AI calls via Electron IPC
+  const aiChat = useCallback(async (messages: any[], dprData: any) => {
+    if (!isElectron) {
+      console.warn('AI chat requires Electron IPC.');
+      return { success: false, error: 'AI features require Electron' };
+    }
+    return window.electronAPI.aiChat(messages, dprData);
+  }, [isElectron]);
+
+  const aiTest = useCallback(async () => {
+    if (!isElectron) {
+      console.warn('AI test requires Electron IPC.');
+      return { success: false, message: 'AI features require Electron', latencyMs: 0 };
+    }
+    return window.electronAPI.aiTest();
+  }, [isElectron]);
+
+  const aiSuggest = useCallback(async (fieldName: string, context: string, projectType: string) => {
+    if (!isElectron) {
+      console.warn('AI suggest requires Electron IPC.');
+      return { success: false, error: 'AI features require Electron' };
+    }
+    return window.electronAPI.aiSuggest(fieldName, context, projectType);
+  }, [isElectron]);
+
+  return {
+    isElectron,
+    minimize, maximize, close, isMaximized,
+    saveDPR, loadDPR, exportExcel,
+    showNotification,
+    aiChat, aiTest, aiSuggest,
+  };
+}
+```
+
+---
+
+## 📦 PHASE 0.5: PMEGP RULES ENGINE — `src/lib/pmegp-rules.ts`
+
+> **CRITICAL NEW FILE**: This is the complete PMEGP scheme rules, validation, and calculation engine. All subsidy calculations, eligibility checks, and PMEGP-specific logic live here. This file MUST be created before Phase 1 types, since types import from it.
+
+```typescript
+// src/lib/pmegp-rules.ts
+// COMPLETE PMEGP scheme rules, validation, and calculation engine
+// Based on official KVIC DPRPACKAGE.xls and PMEGP Guidelines 2023
+
+// ─── ENUMS ───
+
+export const GENDER = {
+  MALE: 1,
+  FEMALE: 2,
+  TRANSGENDER: 3,
+} as const;
+
+export const GENDER_LABELS: Record<number, string> = {
+  1: 'Male',
+  2: 'Female',
+  3: 'Transgender',
+};
+
+export const CATEGORY = {
+  SC: 1,
+  ST: 2,
+  OBC: 3,
+  PHC: 4,
+  EX_SERVICEMAN: 5,
+  MINORITY: 6,
+  HILL_BORDER: 7,
+  ASPIRATIONAL: 8,
+  GENERAL: 9,
+} as const;
+
+// Category labels with separate Excel and display variants
+// excelLabel: Exact text in KVIC DPRPACKAGE.xls (preserved for export fidelity)
+// displayLabel: Cleaned/normalized text for UI display
+export const CATEGORY_LABELS: Record<number, string> = {
+  1: 'SC (Scheduled Caste)',
+  2: 'ST (Scheduled Tribe)',
+  3: 'OBC (Other Backward Class)',
+  4: 'PHC (Differently Abled)',
+  5: 'Ex-Serviceman',
+  6: 'Minority',
+  7: 'Hill & Border Area',
+  8: 'Aspirational Districts',
+  9: 'General',
+};
+
+export interface CategoryEntry {
+  code: number;
+  excelLabel: string;     // Exact label in Excel (may have typos/abbreviations)
+  displayLabel: string;   // Cleaned label for UI
+  subsidyType: 'Special' | 'General';
+}
+
+export const CATEGORY_TABLE: CategoryEntry[] = [
+  { code: 1, excelLabel: 'SC', displayLabel: 'SC (Scheduled Caste)', subsidyType: 'Special' },
+  { code: 2, excelLabel: 'ST', displayLabel: 'ST (Scheduled Tribe)', subsidyType: 'Special' },
+  { code: 3, excelLabel: 'OBC', displayLabel: 'OBC (Other Backward Class)', subsidyType: 'Special' },
+  { code: 4, excelLabel: 'PHC', displayLabel: 'PHC (Differently Abled)', subsidyType: 'Special' },
+  { code: 5, excelLabel: 'Ex-Serviceman', displayLabel: 'Ex-Serviceman', subsidyType: 'Special' },
+  { code: 6, excelLabel: 'Minority', displayLabel: 'Minority', subsidyType: 'Special' },
+  { code: 7, excelLabel: 'Hill Boarder Area', displayLabel: 'Hill & Border Area', subsidyType: 'Special' },
+  { code: 8, excelLabel: 'Aspirational Districts', displayLabel: 'Aspirational Districts', subsidyType: 'Special' },
+  { code: 9, excelLabel: 'General', displayLabel: 'General', subsidyType: 'General' },
+];
+
+// Helper: get Excel label for a category code (for export)
+export function getCategoryExcelLabel(code: number): string {
+  return CATEGORY_TABLE.find(c => c.code === code)?.excelLabel || 'Unknown';
+}
+
+// Helper: get display label for a category code (for UI)
+export function getCategoryDisplayLabel(code: number): string {
+  return CATEGORY_TABLE.find(c => c.code === code)?.displayLabel || CATEGORY_LABELS[code] || 'Unknown';
+}
+
+export const LOCATION = {
+  RURAL: 1,
+  URBAN: 2,
+} as const;
+
+export const LOCATION_LABELS: Record<number, string> = {
+  1: 'Rural',
+  2: 'Urban',
+};
+
+export const AGENCY = {
+  KVIC: 1,
+  KVIB: 2,
+  DIC: 3,
+  COIR_BOARD: 4,
+} as const;
+
+export const AGENCY_LABELS: Record<number, string> = {
+  1: 'KVIC',
+  2: 'KVIB',
+  3: 'DIC',
+  4: 'Coir Board',
+};
+
+export const SECTOR = {
+  MANUFACTURING: 1,
+  SERVICE: 2,
+} as const;
+
+export const SECTOR_LABELS: Record<number, string> = {
+  1: 'Manufacturing',
+  2: 'Service / Business',
+};
+
+export const QUALIFICATION = {
+  UNDER_8TH: 1,
+  EIGHTH_PASS: 2,
+  TENTH_PASS: 3,
+  TWELFTH_PASS: 4,
+  GRADUATE: 5,
+  POST_GRADUATE: 6,
+  PHD: 7,
+} as const;
+
+export const QUALIFICATION_LABELS: Record<number, string> = {
+  1: 'Under 8th',
+  2: '8th Pass',
+  3: '10th Pass',
+  4: '12th Pass',
+  5: 'Graduate',
+  6: 'Post Graduate',
+  7: 'PhD',
+};
+
+export const BUILDING_OWNERSHIP = {
+  OWN: 1,
+  RENTED: 2,
+  LEASED: 3,
+} as const;
+
+export const BUILDING_OWNERSHIP_LABELS: Record<number, string> = {
+  1: 'Own',
+  2: 'Rented',
+  3: 'Leased',
+};
+
+// ─── MAX PROJECT COST ───
+
+export const MAX_PROJECT_COST = {
+  FIRST_LOAN: {
+    [SECTOR.MANUFACTURING]: 5000000,   // ₹50 Lakh
+    [SECTOR.SERVICE]: 2000000,         // ₹20 Lakh
+  },
+  SECOND_LOAN: {
+    [SECTOR.MANUFACTURING]: 10000000,  // ₹1 Crore
+    [SECTOR.SERVICE]: 2500000,         // ₹25 Lakh
+  },
+} as const;
+
+// ─── SUBSIDY CALCULATION (Exact Excel Formula Translation) ───
+
+/**
+ * Calculate subsidy rate based on Excel formula G87:
+ * =IF(M64=2,IF(AND(M55=1,M70=9),15%,25%),IF(AND(M55=1,M70=9),25%,35%))
+ */
+export function calculateSubsidyRate(
+  gender: number,   // M55: 1=Male, 2=Female, 3=Transgender
+  category: number, // M70: 1-9 (see CATEGORY enum)
+  location: number  // M64: 1=Rural, 2=Urban
+): number {
+  const isGeneralMale = gender === GENDER.MALE && category === CATEGORY.GENERAL;
+  
+  if (location === LOCATION.URBAN) {
+    return isGeneralMale ? 0.15 : 0.25;
+  } else {
+    return isGeneralMale ? 0.25 : 0.35;
+  }
+}
+
+/**
+ * Calculate own contribution rate based on Excel formula G85:
+ * =IF(AND(M55=1,M70=9),10%,5%)
+ */
+export function calculateOwnContributionRate(
+  gender: number,
+  category: number
+): number {
+  const isGeneralMale = gender === GENDER.MALE && category === CATEGORY.GENERAL;
+  return isGeneralMale ? 0.10 : 0.05;
+}
+
+/**
+ * Calculate bank finance percentage (G86 = 100% - G85)
+ */
+export function calculateBankFinanceRate(
+  gender: number,
+  category: number
+): number {
+  return 1 - calculateOwnContributionRate(gender, category);
+}
+
+/**
+ * Check if a category is "Special" (gets enhanced subsidy)
+ */
+export function isSpecialCategory(category: number, gender: number): boolean {
+  // Women are ALWAYS special category regardless of social category
+  if (gender !== GENDER.MALE) return true;
+  // General Male is the ONLY non-special category
+  return category !== CATEGORY.GENERAL;
+}
+
+// ─── COMPLETE FINANCE BREAKDOWN ───
+
+export interface FinanceBreakdown {
+  projectCost: number;
+  ownContributionPct: number;
+  ownContributionAmt: number;
+  bankFinancePct: number;
+  bankLoanAmt: number;             // Full sanctioned loan (90%/95% of project cost)
+  subsidyPct: number;
+  subsidyAmt: number;               // Margin Money — held in account/TDR during lock-in
+  netLiabilityAfterLockIn: number;   // Bank loan minus Margin Money — the amount actually repaid after 3-year lock-in + physical verification
+  monthlyEMI: number;               // EMI on netLiabilityAfterLockIn
+}
+
+export function calculateFinanceBreakdown(
+  projectCost: number,
+  gender: number,
+  category: number,
+  location: number,
+  interestRate: number = 0.11, // default 11%
+  loanTenureYears: number = 7,
+  isSecondLoan: boolean = false,  // ⭐ NEW: 2nd loan uses different subsidy rates
+  isNERHill: boolean = false      // ⭐ NEW: NER & Hill states get 20% for 2nd loan
+): FinanceBreakdown {
+  // 2nd loan has FIXED subsidy rates regardless of gender/category/location
+  const subsidyPct = isSecondLoan
+    ? (isNERHill ? SECOND_LOAN_SUBSIDY.NER_HILL : SECOND_LOAN_SUBSIDY.GENERAL)
+    : calculateSubsidyRate(gender, category, location);
+  const ownContributionPct = calculateOwnContributionRate(gender, category);
+  const bankFinancePct = calculateBankFinanceRate(gender, category);
+  
+  const ownContributionAmt = projectCost * ownContributionPct;
+  const bankLoanAmt = projectCost * bankFinancePct;           // Full sanctioned amount (90%/95%)
+  const subsidyAmt = projectCost * subsidyPct;                 // Margin Money — held in account/TDR
+  const netLiabilityAfterLockIn = bankLoanAmt - subsidyAmt;    // Actual repayment after 3-yr lock-in + physical verification
+  
+  // EMI calculated on net liability after lock-in (the amount borrower actually repays)
+  const monthlyRate = interestRate / 12;
+  const totalMonths = loanTenureYears * 12;
+  const monthlyEMI = netLiabilityAfterLockIn > 0
+    ? (netLiabilityAfterLockIn * monthlyRate * Math.pow(1 + monthlyRate, totalMonths))
+      / (Math.pow(1 + monthlyRate, totalMonths) - 1)
+    : 0;
+
+  return {
+    projectCost,
+    ownContributionPct,
+    ownContributionAmt,
+    bankFinancePct,
+    bankLoanAmt,
+    subsidyPct,
+    subsidyAmt,
+    netLiabilityAfterLockIn,
+    monthlyEMI,
+  };
+}
+
+// ─── 2ND LOAN CALCULATION ───
+
+export const SECOND_LOAN_SUBSIDY = {
+  GENERAL: 0.15,        // 15% for all categories
+  NER_HILL: 0.20,       // 20% for NER & Hill States
+} as const;
+
+export const SECOND_LOAN_MAX_SUBSIDY = {
+  [SECTOR.MANUFACTURING]: {
+    GENERAL: 1500000,    // ₹15 Lakh
+    NER_HILL: 2000000,   // ₹20 Lakh
+  },
+  [SECTOR.SERVICE]: {
+    GENERAL: 375000,     // ₹3.75 Lakh
+    NER_HILL: 500000,    // ₹5 Lakh
+  },
+} as const;
+
+// ─── CAPACITY UTILIZATION ───
+
+export const CAPACITY_UTILIZATION = [0.70, 0.80, 0.90, 0.90, 0.90] as const;
+
+// ─── DEPRECIATION RATES ───
+
+export const DEPRECIATION = {
+  BUILDING: { method: 'SLN', rate: 0.05 },      // 5% Straight Line
+  MACHINERY: { method: 'WDV', rate: 0.15 },      // 15% Written Down Value
+  FURNITURE: { method: 'WDV', rate: 0.10 },       // 10% Written Down Value
+  OTHERS: { method: 'WDV', rate: 0.15 },          // 15% WDV
+} as const;
+
+// ─── EDP TRAINING REQUIREMENTS ───
+
+export function getEDPRequirement(projectCost: number): {
+  mandatory: boolean;
+  duration: string;
+  days: number;
+} {
+  if (projectCost <= 200000) {
+    return { mandatory: false, duration: 'Not Required', days: 0 };
+  } else if (projectCost <= 500000) {
+    return { mandatory: true, duration: '5 Working Days', days: 5 };
+  } else {
+    return { mandatory: true, duration: '10 Working Days', days: 10 };
+  }
+}
+
+// ─── COLLATERAL RULES ───
+
+export function getCollateralRequirement(projectCost: number): {
+  collateralFree: boolean;
+  cgtmseAvailable: boolean;
+  cgtmseMaxCover: number;
+  message: string;
+} {
+  if (projectCost <= 1000000) {
+    return {
+      collateralFree: true,
+      cgtmseAvailable: true,
+      cgtmseMaxCover: projectCost,
+      message: 'No collateral required (RBI mandate for loans up to ₹10 Lakh)',
+    };
+  } else if (projectCost <= 20000000) {
+    return {
+      collateralFree: false,
+      cgtmseAvailable: true,
+      cgtmseMaxCover: 20000000, // ₹2 Crore
+      message: 'CGTMSE guarantee available up to ₹2 Crore (no collateral needed with guarantee)',
+    };
+  } else {
+    return {
+      collateralFree: false,
+      cgtmseAvailable: false,
+      cgtmseMaxCover: 0,
+      message: 'Collateral may be required by the bank',
+    };
+  }
+}
+
+// ─── NEGATIVE LIST ───
+
+// ─── ACTIVITY CLASSIFICATION ENGINE ───
+// Replaces simple substring matching with a proper classification system.
+// Each activity has keywords to match, a status (Prohibited/Conditional/Allowed),
+// and context to distinguish between similar activities.
+
+export interface ActivityClassification {
+  keywords: string[];           // Keywords that trigger this classification
+  excludeKeywords?: string[];  // Keywords that EXCLUDE from this classification (overrides match)
+  status: 'PROHIBITED' | 'CONDITIONAL' | 'ALLOWED';
+  reason: string;
+  conditions?: string;         // For CONDITIONAL items, what conditions apply
+  guidelineRef?: string;       // Reference to PMEGP guideline section
+}
+
+export const ACTIVITY_CLASSIFICATIONS: ActivityClassification[] = [
+  // ── PROHIBITED ──
+  {
+    keywords: ['meat processing', 'meat canning', 'slaughterhouse', 'slaughtered meat'],
+    excludeKeywords: ['meat masala', 'meat spice', 'meat flavouring', 'meat flavoring'],
+    status: 'PROHIBITED',
+    reason: 'Meat processing/canning/serving of slaughtered meat — socio-religious sensitivity',
+    guidelineRef: 'PMEGP Guidelines — Negative List Item 1',
+  },
+  {
+    keywords: ['beedi', 'bidi', 'paan', 'cigar', 'cigarette'],
+    status: 'PROHIBITED',
+    reason: 'Beedi/Paan/Cigar/Cigarette manufacturing or sale — health hazards',
+    guidelineRef: 'Negative List Item 2',
+  },
+  {
+    keywords: ['liquor', 'bar', 'wine shop', 'wine', 'alcohol serving', 'toddy', 'beer', 'pub', 'tavern'],
+    status: 'PROHIBITED',
+    reason: 'Hotels/Dhabas serving liquor, toddy tapping, or any alcohol-related business — intoxicant items are prohibited',
+    guidelineRef: 'Negative List Items 3 & 5',
+  },
+  {
+    keywords: ['tobacco', 'tobacco preparation', 'tobacco manufacturing', 'gutka', 'zarda', 'khaini'],
+    status: 'PROHIBITED',
+    reason: 'Tobacco preparation/manufacturing as raw material — health hazards. ALL tobacco-related activities are prohibited under PMEGP.',
+    guidelineRef: 'Negative List Item 4',
+  },
+  {
+    keywords: ['polythene', 'plastic bag', 'carry bag', 'plastic carry'],
+    excludeKeywords: ['recycling', 'above 75', '75 micron', '> 75'],
+    status: 'PROHIBITED',
+    reason: 'Polythene carry bags below 75 microns — environmental concerns',
+    conditions: 'Bags >= 75 microns thickness are allowed',
+    guidelineRef: 'Negative List Item 6',
+  },
+  {
+    keywords: ['recycled plastic', 'recycled container'],
+    excludeKeywords: ['non-food', 'industrial'],
+    status: 'PROHIBITED',
+    reason: 'Recycled plastic containers for food storage — health/environment',
+    conditions: 'Recycled plastic for non-food/industrial use may be allowed',
+    guidelineRef: 'Negative List Item 7',
+  },
+  {
+    keywords: ['tea plantation', 'coffee plantation', 'rubber plantation', 'tea cultivation', 'coffee cultivation', 'rubber cultivation', 'crop cultivation'],
+    excludeKeywords: ['tea processing', 'tea packaging', 'coffee processing', 'coffee roasting', 'rubber processing', 'value addition', 'manufacturing'],
+    status: 'PROHIBITED',
+    reason: 'Basic cultivation of crops/plantation (Tea, Coffee, Rubber) — agricultural exclusion',
+    conditions: 'Value addition (processing, packaging, roasting) IS ALLOWED',
+    guidelineRef: 'Negative List Item 8',
+  },
+  {
+    keywords: ['sericulture', 'cocoon rearing'],
+    excludeKeywords: ['silk processing', 'silk weaving', 'silk manufacturing', 'value addition'],
+    status: 'PROHIBITED',
+    reason: 'Basic sericulture (cocoon rearing) — agricultural exclusion',
+    conditions: 'Off-farm/farm-linked sericulture activities & silk processing ARE ALLOWED',
+    guidelineRef: 'Negative List Item 9',
+  },
+  {
+    keywords: ['horticulture', 'floriculture'],
+    excludeKeywords: ['nursery', 'processing', 'packaging', 'value addition', 'floral arrangement', 'flower shop'],
+    status: 'PROHIBITED',
+    reason: 'Basic horticulture/floriculture cultivation — agricultural exclusion',
+    conditions: 'Off-farm activities, nurseries, flower shops, value addition ARE ALLOWED',
+    guidelineRef: 'Negative List Item 10',
+  },
+  {
+    keywords: ['animal husbandry'],
+    excludeKeywords: ['dairy', 'poultry', 'aquaculture', 'fishery', 'bee', 'piggery'],
+    status: 'PROHIBITED',
+    reason: 'Basic animal husbandry (rearing only) — agricultural exclusion',
+    conditions: 'Dairy, Poultry, Aquaculture, Bee keeping, Piggery (NER) ARE ALLOWED',
+    guidelineRef: 'Negative List Item 11',
+  },
+  {
+    keywords: ['pashmina', 'hand spinning', 'hand weaving'],
+    excludeKeywords: ['power loom', 'machine', 'manufacturing'],
+    status: 'PROHIBITED',
+    reason: 'Pashmina Wool hand spinning/hand weaving — comes under Khadi Certification',
+    guidelineRef: 'Negative List Item 13',
+  },
+  {
+    keywords: ['rural transport', 'transport service', 'auto rickshaw', 'rickshaw'],
+    excludeKeywords: ['ner', 'north east', 'andaman', 'cng', 'a&n'],
+    status: 'CONDITIONAL',
+    reason: 'Rural transport is generally not allowed — not village industry',
+    conditions: 'Auto rickshaws: A&N Islands and NER only (CNG, Chief Secretary approval). House boats: A&N and J&K only',
+    guidelineRef: 'Negative List Item 14',
+  },
+
+  // ── CONDITIONAL (ALLOWED WITH CONDITIONS) ──
+  {
+    keywords: ['hotel', 'dhaba', 'restaurant', 'mess', 'canteen'],
+    excludeKeywords: ['liquor', 'bar', 'wine'],
+    status: 'CONDITIONAL',
+    reason: 'Hotels/Dhabas are allowed ONLY if they do NOT serve liquor',
+    conditions: 'Non-vegetarian food WITHOUT liquor is ALLOWED',
+    guidelineRef: 'Negative List Exception',
+  },
+  {
+    keywords: ['piggery', 'pig farming', 'pig rearing'],
+    status: 'CONDITIONAL',
+    reason: 'Piggery is allowed ONLY in NER (North Eastern Region) states',
+    conditions: 'Allowed in: Arunachal Pradesh, Assam, Manipur, Meghalaya, Mizoram, Nagaland, Tripura, Sikkim only',
+    guidelineRef: 'Negative List Exception',
+  },
+
+  // ── EXPLICITLY ALLOWED (to override false matches) ──
+  {
+    keywords: ['dairy', 'milk', 'ghee', 'butter', 'cheese', 'curd'],
+    status: 'ALLOWED',
+    reason: 'Dairy (cows, sheep, goats, camels, buffaloes) is explicitly ALLOWED under PMEGP',
+    guidelineRef: 'Negative List Exception',
+  },
+  {
+    keywords: ['poultry', 'chicken', 'egg', 'turkey', 'duck', 'geese'],
+    status: 'ALLOWED',
+    reason: 'Poultry farming is explicitly ALLOWED under PMEGP',
+    guidelineRef: 'Negative List Exception',
+  },
+  {
+    keywords: ['aquaculture', 'fishery', 'fish farming', 'fish', 'shrimp', 'prawn', 'crab'],
+    status: 'ALLOWED',
+    reason: 'Aquaculture is explicitly ALLOWED under PMEGP',
+    guidelineRef: 'Negative List Exception',
+  },
+  {
+    keywords: ['bee keeping', 'apiary', 'honey', 'sericulture processing', 'silk'],
+    status: 'ALLOWED',
+    reason: 'Bee keeping and silk processing/value addition ARE ALLOWED',
+    guidelineRef: 'Negative List Exception',
+  },
+  {
+    keywords: ['tea processing', 'tea packaging', 'tea manufacturing', 'coffee processing', 'coffee roasting', 'coffee packaging', 'rubber processing', 'rubber manufacturing'],
+    status: 'ALLOWED',
+    reason: 'Value addition (processing, packaging) of Tea/Coffee/Rubber IS ALLOWED — only basic cultivation is prohibited',
+    guidelineRef: 'Negative List Exception',
+  },
+  {
+    keywords: ['meat masala', 'meat spice', 'spice manufacturing', 'masala'],
+    status: 'ALLOWED',
+    reason: 'Meat masala/spice manufacturing IS ALLOWED — only meat processing/canning of slaughtered meat is prohibited',
+    guidelineRef: 'Negative List Exception',
+  },
+  {
+    keywords: ['nursery', 'plant nursery', 'flower shop', 'floral', 'garden center'],
+    status: 'ALLOWED',
+    reason: 'Nurseries and flower shops ARE ALLOWED — only basic horticulture/floriculture cultivation is prohibited',
+    guidelineRef: 'Negative List Exception',
+  },
+];
+
+export function isActivityAllowed(activityName: string): {
+  allowed: boolean;
+  status: 'ALLOWED' | 'CONDITIONAL' | 'PROHIBITED';
+  warning?: string;
+  classification?: ActivityClassification;
+  allMatches?: ActivityClassification[];  // ⭐ NEW: all matching classifications
+} {
+  const name = activityName.toLowerCase().trim();
+  const allMatches: ActivityClassification[] = [];
+  
+  // Single pass: collect ALL matching classifications
+  for (const classification of ACTIVITY_CLASSIFICATIONS) {
+    const matched = classification.keywords.some(kw => name.includes(kw.toLowerCase()));
+    const excluded = classification.excludeKeywords?.some(kw => name.includes(kw.toLowerCase())) ?? false;
+    if (matched && !excluded) {
+      allMatches.push(classification);
+    }
+  }
+  
+  // If no matches, return allowed with advisory
+  if (allMatches.length === 0) {
+    return {
+      allowed: true,
+      status: 'ALLOWED',
+      warning: 'This activity was not found in our database. Please verify with KVIC that it is not in the PMEGP negative list before proceeding.',
+      allMatches,
+    };
+  }
+  
+  // Priority: PROHIBITED > CONDITIONAL > ALLOWED
+  // If ANY match is PROHIBITED, the activity is PROHIBITED (safety-first approach)
+  const prohibitedMatch = allMatches.find(c => c.status === 'PROHIBITED');
+  if (prohibitedMatch) {
+    return {
+      allowed: false,
+      status: 'PROHIBITED',
+      warning: `🔴 PROHIBITED: ${prohibitedMatch.reason}${prohibitedMatch.conditions ? ` Note: ${prohibitedMatch.conditions}` : ''}`,
+      classification: prohibitedMatch,
+      allMatches,
+    };
+  }
+  
+  // If any match is CONDITIONAL (and none prohibited), return CONDITIONAL
+  const conditionalMatch = allMatches.find(c => c.status === 'CONDITIONAL');
+  if (conditionalMatch) {
+    return {
+      allowed: true,
+      status: 'CONDITIONAL',
+      warning: `⚠️ CONDITIONAL: ${conditionalMatch.reason}. Conditions: ${conditionalMatch.conditions}`,
+      classification: conditionalMatch,
+      allMatches,
+    };
+  }
+  
+  // Only ALLOWED matches found
+  const allowedMatch = allMatches.find(c => c.status === 'ALLOWED');
+  return {
+    allowed: true,
+    status: 'ALLOWED',
+    classification: allowedMatch,
+    allMatches,
+  };
+}
+
+// ─── ELIGIBILITY VALIDATION ───
+
+export interface EligibilityCheck {
+  eligible: boolean;
+  issues: string[];
+  warnings: string[];
+}
+
+export function checkEligibility(params: {
+  age: number;
+  gender: number;
+  category: number;
+  qualification: number;
+  sector: number;
+  projectCost: number;
+  isExistingUnit: boolean;
+  hasPreviousPMEGP: boolean;
+  hasPreviousGovtSubsidy: boolean;  // Subsidy from OTHER govt schemes (not PMEGP)
+  activityName: string;
+  noOfEmployees: number;           // For per capita investment validation
+}): EligibilityCheck {
+  const issues: string[] = [];
+  const warnings: string[] = [];
+
+  // Age check
+  if (params.age < 18) {
+    issues.push('Applicant must be at least 18 years old');
+  }
+
+  // Existing unit check — handles multiple cases
+  if (params.isExistingUnit) {
+    if (params.hasPreviousPMEGP) {
+      // Has previous PMEGP loan → eligible for 2nd loan (upgradation)
+      warnings.push('Existing PMEGP unit detected — you may be eligible for 2nd loan (upgradation). Subsidy rate: 15% (20% NER/Hill). Max project: ₹1Cr (Mfg) / ₹25L (Svc).');
+      warnings.push('⚠️ 2nd loan requirements: (1) 1st loan lock-in period must be completed, (2) regular repayment of 1st loan installments, (3) physical verification completed, (4) unit must be performing well. Verify ALL conditions before applying.');
+    } else if (params.hasPreviousGovtSubsidy) {
+      // Had govt subsidy under OTHER schemes → NOT eligible
+      issues.push('Existing unit that already availed Govt subsidy under State/Central schemes is NOT eligible for PMEGP');
+    } else {
+      // Existing unit without any govt subsidy → NOT eligible for 1st loan
+      issues.push('PMEGP is for new units only. The only exception is 2nd loan for existing PMEGP/REGP/MUDRA units (upgradation).');
+    }
+  }
+
+  // Qualification check
+  const minQualification = params.sector === SECTOR.MANUFACTURING
+    ? (params.projectCost > 1000000 ? QUALIFICATION.EIGHTH_PASS : 0)
+    : (params.projectCost > 500000 ? QUALIFICATION.EIGHTH_PASS : 0);
+  
+  if (minQualification > 0 && params.qualification < minQualification) {
+    issues.push(`Minimum qualification required: ${QUALIFICATION_LABELS[minQualification]} for project cost above ₹${params.sector === SECTOR.MANUFACTURING ? '10' : '5'} Lakh`);
+  }
+
+  // Project cost limit check
+  const maxCost = MAX_PROJECT_COST.FIRST_LOAN[params.sector as keyof typeof MAX_PROJECT_COST.FIRST_LOAN];
+  if (params.projectCost > maxCost) {
+    warnings.push(`Project cost exceeds PMEGP limit of ₹${maxCost / 100000} Lakh for ${SECTOR_LABELS[params.sector]} sector. Balance amount will not receive subsidy.`);
+  }
+
+  // Negative list check
+  const activityCheck = isActivityAllowed(params.activityName);
+  if (!activityCheck.allowed) {
+    issues.push(activityCheck.warning || 'Activity is in PMEGP negative list');
+  } else if (activityCheck.status === 'CONDITIONAL') {
+    warnings.push(activityCheck.warning || 'Activity has conditions');
+  }
+
+  // Per capita investment check (Common Mistake #10)
+  if (params.projectCost > 0 && params.noOfEmployees > 0) {
+    const perCapitaInvestment = params.projectCost / params.noOfEmployees;
+    const maxPerCapitaPlain = 300000;    // ₹3 Lakh per worker (plain areas)
+    const maxPerCapitaHilly = 450000;    // ₹4.5 Lakh per worker (hilly areas)
+    // Note: Location info not available in params, use plain area limit as default
+    if (perCapitaInvestment > maxPerCapitaHilly) {
+      issues.push(`Per capita investment (₹${(perCapitaInvestment / 100000).toFixed(2)} Lakh/worker) exceeds limit of ₹4.5 Lakh (hilly) / ₹3 Lakh (plain). Reduce project cost or increase employment.`);
+    } else if (perCapitaInvestment > maxPerCapitaPlain) {
+      warnings.push(`Per capita investment (₹${(perCapitaInvestment / 100000).toFixed(2)} Lakh/worker) exceeds ₹3 Lakh limit for plain areas. May be OK for hilly/NE areas (limit: ₹4.5 Lakh).`);
+    }
+  }
+
+  // One project per family check (Common Mistake #6)
+  warnings.push('Reminder: Only ONE PMEGP project per family (self + spouse). If you or your spouse already have a PMEGP project, you are NOT eligible.');
+
+  return {
+    eligible: issues.length === 0,
+    issues,
+    warnings,
+  };
+}
+
+// ─── REQUIRED DOCUMENTS ───
+
+export const REQUIRED_DOCUMENTS = [
+  { name: 'Aadhaar Card', mandatory: true },
+  { name: 'PAN Card', mandatory: true },
+  { name: 'Passport Size Photo', mandatory: true },
+  { name: 'Educational Qualification Certificate', mandatory: false, note: 'Required if project >₹10L (Mfg) or >₹5L (Svc)' },
+  { name: 'Caste Certificate', mandatory: false, note: 'For SC/ST/OBC claims' },
+  { name: 'Special Category Certificate', mandatory: false, note: 'For PH/Ex-Serviceman/Minority' },
+  { name: 'Project Report / DPR', mandatory: true },
+  { name: 'Address Proof', mandatory: true },
+  { name: 'Bank Account Details', mandatory: true },
+  { name: 'Rural/Urban Certificate', mandatory: true },
+  { name: 'Land/Building Ownership Proof', mandatory: false, note: 'If own premises' },
+  { name: 'Rental Agreement', mandatory: false, note: 'If rented premises' },
+] as const;
+```
+
+---
+
+## 💰 CURRENCY FORMATTING — `src/lib/format-currency.ts`
+
+```typescript
+// src/lib/format-currency.ts
+// Indian numbering system formatter: ₹12,50,000 (not ₹1,250,000)
+
+export function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+// Short form: ₹50L, ₹1Cr
+export function formatCurrencyShort(amount: number): string {
+  if (amount >= 10000000) {
+    return `₹${(amount / 10000000).toFixed(amount % 10000000 === 0 ? 0 : 2)} Cr`;
+  } else if (amount >= 100000) {
+    return `₹${(amount / 100000).toFixed(amount % 100000 === 0 ? 0 : 2)} L`;
+  }
+  return formatCurrency(amount);
+}
+
+// Format percentage
+export function formatPercent(value: number): string {
+  return `${(value * 100).toFixed(0)}%`;
+}
+```
+
+---
+
+## 📄 REPORT GENERATOR — `src/lib/report-generator.ts`
+
+> **CRITICAL**: The PDF export pipeline requires this file. The preload API `exportPDF(html)` sends an HTML string to the main process, which uses `webContents.printToPDF()` to generate the PDF. This module converts DPR data into that print-ready HTML. Without it, the PDF export button does nothing.
+
+```typescript
+// src/lib/report-generator.ts
+// Converts DPRData into a print-ready HTML string for PDF export.
+// Called from renderer: window.electronAPI.exportPDF(generateDPRReportHTML(dprData))
+
+import { formatCurrency, formatCurrencyShort, formatPercent } from './format-currency';
+import type { DPRData } from './dpr-types';
+
+export function generateDPRReportHTML(dprData: DPRData): string {
+  const computed = dprData.computed || {};
+  const totalBuilding = (dprData.buildingItems || []).reduce((s, b) => s + (b.amount || 0), 0);
+  const totalMachinery = (dprData.machineryItems || []).reduce((s, m) => s + (m.amount || 0), 0);
+  const totalCapitalExp = totalBuilding + totalMachinery
+    + (dprData.otherCosts?.preliminaryCost || 0)
+    + (dprData.otherCosts?.furnitureFixtures || 0)
+    + (dprData.otherCosts?.contingency || 0);
+  const totalWorkingCapital = (dprData.workingCapitalItems || [])
+    .reduce((s, w) => s + (w.amount || 0), 0);
+  const totalProjectCost = computed.projectCost || (totalCapitalExp + totalWorkingCapital);
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Detailed Project Report — ${dprData.project?.projectName || 'PMEGP'}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11pt; color: #1a1a1a; padding: 40px; line-height: 1.6; }
+    h1 { font-size: 18pt; text-align: center; color: #065f46; margin-bottom: 4px; }
+    h2 { font-size: 14pt; color: #065f46; border-bottom: 2px solid #065f46; margin: 20px 0 10px; padding-bottom: 4px; }
+    h3 { font-size: 12pt; color: #1a1a1a; margin: 12px 0 6px; }
+    .subtitle { text-align: center; font-size: 10pt; color: #666; margin-bottom: 24px; }
+    table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; font-size: 10pt; }
+    th { background: #065f46; color: white; padding: 6px 10px; text-align: left; }
+    td { padding: 5px 10px; border-bottom: 1px solid #ddd; }
+    tr:nth-child(even) td { background: #f0fdf4; }
+    .amount { text-align: right; font-variant-numeric: tabular-nums; }
+    .total-row td { font-weight: bold; border-top: 2px solid #065f46; background: #ecfdf5; }
+    .section-divider { page-break-before: always; }
+    .cover { text-align: center; padding: 80px 0 40px; }
+    .cover h1 { font-size: 24pt; margin-bottom: 12px; }
+    .cover .project-name { font-size: 16pt; color: #065f46; margin: 16px 0; }
+    .cover .promoter { font-size: 12pt; color: #444; }
+    .glance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; margin: 12px 0; }
+    .glance-item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dotted #ccc; }
+    .glance-label { font-weight: 600; }
+    @media print { body { padding: 20px; } .section-divider { page-break-before: always; } }
+  </style>
+</head>
+<body>
+
+<!-- COVER PAGE -->
+<div class="cover">
+  <h1>📋 DETAILED PROJECT REPORT</h1>
+  <div class="subtitle">Under Prime Minister's Employment Generation Programme (PMEGP)</div>
+  <div class="project-name">${dprData.project?.projectName || '—'}</div>
+  <div class="promoter">Promoter: ${dprData.applicant?.name || '—'}</div>
+  <div class="promoter">Prepared by: DPR Guide Pro</div>
+  <div class="promoter">Date: ${new Date().toLocaleDateString('en-IN')}</div>
+</div>
+
+<!-- PROJECT AT A GLANCE -->
+<div class="section-divider"></div>
+<h2>1. Project at a Glance</h2>
+<div class="glance-grid">
+  <div class="glance-item"><span class="glance-label">Name of Project</span><span>${dprData.project?.projectName || '—'}</span></div>
+  <div class="glance-item"><span class="glance-label">Name of Promoter</span><span>${dprData.applicant?.name || '—'}</span></div>
+  <div class="glance-item"><span class="glance-label">Sector</span><span>${dprData.project?.sector === 1 ? 'Manufacturing' : 'Service'}</span></div>
+  <div class="glance-item"><span class="glance-label">Location</span><span>${dprData.project?.location === 1 ? 'Rural' : 'Urban'}</span></div>
+  <div class="glance-item"><span class="glance-label">Total Project Cost</span><span>${formatCurrency(totalProjectCost)}</span></div>
+  <div class="glance-item"><span class="glance-label">Own Contribution (${formatPercent(computed.ownContributionPct || 0.05)})</span><span>${formatCurrency(computed.ownContributionAmt || 0)}</span></div>
+  <div class="glance-item"><span class="glance-label">Bank Loan (Sanctioned)</span><span>${formatCurrency(computed.bankLoanAmt || 0)}</span></div>
+  <div class="glance-item"><span class="glance-label">Margin Money (Subsidy ${formatPercent(computed.subsidyPct || 0.25)})</span><span>${formatCurrency(computed.subsidyAmt || 0)}</span></div>
+  <div class="glance-item"><span class="glance-label">Net Liability After Lock-In</span><span>${formatCurrency(computed.netLiabilityAfterLockIn || 0)}</span></div>
+  ${dprData.project?.isSecondLoan ? '<div class="glance-item"><span class="glance-label">2nd Loan</span><span>Yes' + (dprData.project?.isNERHill ? ' (NER/Hill — 20% subsidy)' : ' (General — 15% subsidy)') + '</span></div>' : ''}
+</div>
+
+<!-- COST OF PROJECT -->
+<h2>2. Cost of Project</h2>
+<table>
+  <tr><th>Particulars</th><th class="amount">Amount (₹)</th></tr>
+  <tr><td>Building / Civil Works</td><td class="amount">${formatCurrency(totalBuilding)}</td></tr>
+  <tr><td>Machinery & Equipment</td><td class="amount">${formatCurrency(totalMachinery)}</td></tr>
+  <tr><td>Preliminary / Pre-operative Expenses</td><td class="amount">${formatCurrency(dprData.otherCosts?.preliminaryCost || 0)}</td></tr>
+  <tr><td>Furniture & Fixtures</td><td class="amount">${formatCurrency(dprData.otherCosts?.furnitureFixtures || 0)}</td></tr>
+  <tr><td>Contingencies</td><td class="amount">${formatCurrency(dprData.otherCosts?.contingency || 0)}</td></tr>
+  <tr class="total-row"><td>Total Capital Expenditure</td><td class="amount">${formatCurrency(totalCapitalExp)}</td></tr>
+  <tr><td>Working Capital</td><td class="amount">${formatCurrency(totalWorkingCapital)}</td></tr>
+  <tr class="total-row"><td>TOTAL PROJECT COST</td><td class="amount">${formatCurrency(totalProjectCost)}</td></tr>
+</table>
+
+<!-- MEANS OF FINANCE -->
+<h2>3. Means of Finance</h2>
+<table>
+  <tr><th>Source</th><th>%</th><th class="amount">Amount (₹)</th></tr>
+  <tr><td>Own Contribution</td><td>${formatPercent(computed.ownContributionPct || 0.05)}</td><td class="amount">${formatCurrency(computed.ownContributionAmt || 0)}</td></tr>
+  <tr><td>Bank Loan (Sanctioned)</td><td>${formatPercent(1 - (computed.ownContributionPct || 0.05))}</td><td class="amount">${formatCurrency(computed.bankLoanAmt || 0)}</td></tr>
+  <tr class="total-row"><td>Total</td><td>100%</td><td class="amount">${formatCurrency(totalProjectCost)}</td></tr>
+</table>
+<p style="margin-top:8px;font-size:9pt;color:#666;">
+  Subsidy (Margin Money): ${formatPercent(computed.subsidyPct || 0.25)} = ${formatCurrency(computed.subsidyAmt || 0)} — held in TDR during 3-year lock-in.<br>
+  Net Liability After Lock-In: ${formatCurrency(computed.netLiabilityAfterLockIn || 0)} (Bank Loan − Margin Money, adjusted after lock-in + physical verification)
+</p>
+
+<!-- 5-YEAR P&L PROJECTION -->
+<div class="section-divider"></div>
+<h2>4. Profit & Loss Projection (5 Years)</h2>
+<p style="font-size:9pt;color:#666;">Capacity Utilisation: Y1=70%, Y2=80%, Y3-5=90%</p>
+<table>
+  <tr><th>Particulars</th><th class="amount">Year 1</th><th class="amount">Year 2</th><th class="amount">Year 3</th><th class="amount">Year 4</th><th class="amount">Year 5</th></tr>
+  <!-- Rows populated at runtime by dpr-calculations.ts outputs -->
+  <tr><td colspan="6" style="text-align:center;color:#888;font-style:italic;">Populated from computed P&L data (dpr-calculations.ts)</td></tr>
+</table>
+
+<!-- KEY RATIOS -->
+<h2>5. Key Financial Ratios</h2>
+<table>
+  <tr><th>Ratio</th><th>Value</th><th>Benchmark</th></tr>
+  <tr><td>DSCR</td><td>${(computed.dscr || 0).toFixed(2)}</td><td>≥ 1.5</td></tr>
+  <tr><td>ROI</td><td>${(computed.roi || 0).toFixed(2)}%</td><td>—</td></tr>
+  <tr><td>Break-Even Point</td><td>${(computed.breakEven || 0).toFixed(2)}%</td><td>Lower is better</td></tr>
+</table>
+
+<!-- DISCLAIMER -->
+<div class="section-divider"></div>
+<div style="margin-top:24px;padding:12px;background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;font-size:9pt;">
+  <strong>Disclaimer:</strong> This Detailed Project Report has been generated by DPR Guide Pro software for the purpose of supporting a PMEGP loan application.
+  The financial projections are estimates based on the data provided by the applicant. Actual results may vary.
+  Applicants are advised to verify all figures with a qualified Chartered Accountant before submission to the bank.
+  The Margin Money (subsidy) is subject to approval by the Implementing Agency (KVIC/KVIB/DIC) and is held in TDR during the 3-year lock-in period.
+</div>
+
+</body>
+</html>`;
+}
+```
+
+> **Usage in renderer**: When the user clicks "Export PDF":
+> ```typescript
+> const html = generateDPRReportHTML(dprData);
+> const filePath = await window.electronAPI.exportPDF(html);
+> ```
+>
+> The HTML is sent to the main process via IPC, loaded in a hidden BrowserWindow, and converted to PDF using `webContents.printToPDF()`.
+
+---
+
+## 🤖 UPDATED AI SYSTEM PROMPT — `src/lib/ai-system-prompt.ts`
+
+> This replaces the old AI system prompt with a complete PMEGP-aware version. The AI assistant uses this prompt to answer all questions accurately based on scheme rules.
+
+```typescript
+// src/lib/ai-system-prompt.ts
+// ⚠️ IMPORTANT: This prompt is DYNAMICALLY built from pmegp-rules.ts constants.
+// When PMEGP rules change, update pmegp-rules.ts — this prompt will auto-update.
+// Do NOT hardcode subsidy rates, max costs, or contribution percentages here.
+
+import {
+  GENDER, CATEGORY, LOCATION, SECTOR,
+  calculateSubsidyRate,
+  calculateOwnContributionRate,
+  SECOND_LOAN_SUBSIDY,
+  MAX_PROJECT_COST,
+  CAPACITY_UTILIZATION,
+  DEPRECIATION,
+} from './pmegp-rules';
+import { formatCurrencyShort } from './format-currency';
+
+export function getDPRSystemPrompt(dprData: any): string {
+  // ⭐ DYNAMIC: All rates computed from pmegp-rules.ts — single source of truth
+  const subsidyGeneralMaleUrban = calculateSubsidyRate(GENDER.MALE, CATEGORY.GENERAL, LOCATION.URBAN) * 100;
+  const subsidyGeneralMaleRural = calculateSubsidyRate(GENDER.MALE, CATEGORY.GENERAL, LOCATION.RURAL) * 100;
+  const subsidySpecialUrban = calculateSubsidyRate(GENDER.FEMALE, CATEGORY.SC, LOCATION.URBAN) * 100;  // Any special category
+  const subsidySpecialRural = calculateSubsidyRate(GENDER.FEMALE, CATEGORY.SC, LOCATION.RURAL) * 100;
+  const ownContribGeneral = calculateOwnContributionRate(GENDER.MALE, CATEGORY.GENERAL) * 100;
+  const ownContribSpecial = calculateOwnContributionRate(GENDER.FEMALE, CATEGORY.SC) * 100;
+  const secondLoanGeneral = SECOND_LOAN_SUBSIDY.GENERAL * 100;
+  const secondLoanNERHill = SECOND_LOAN_SUBSIDY.NER_HILL * 100;
+  const maxMfg1st = formatCurrencyShort(MAX_PROJECT_COST.FIRST_LOAN[SECTOR.MANUFACTURING]);
+  const maxSvc1st = formatCurrencyShort(MAX_PROJECT_COST.FIRST_LOAN[SECTOR.SERVICE]);
+  const maxMfg2nd = formatCurrencyShort(MAX_PROJECT_COST.SECOND_LOAN[SECTOR.MANUFACTURING]);
+  const maxSvc2nd = formatCurrencyShort(MAX_PROJECT_COST.SECOND_LOAN[SECTOR.SERVICE]);
+  const capUtil = CAPACITY_UTILIZATION.map(r => `${(r * 100).toFixed(0)}%`).join(', ');
+
+  return `You are "DPR Guide Pro AI" — an expert assistant for the PMEGP (Prime Minister's Employment Generation Programme) scheme by the Government of India, Ministry of MSME, administered by KVIC.
+
+## YOUR KNOWLEDGE BASE:
+
+### PMEGP Scheme Overview
+- Credit-linked subsidy scheme launched 15 Aug 2008
+- Central sector scheme under Ministry of MSME
+- Nodal Agency: KVIC (Khadi and Village Industries Commission)
+- Current period: FY 2021-22 to FY 2025-26 (may be extended to FY 2026-27 — check latest KVIC notification)
+- Only for NEW micro-enterprises in non-farm sector
+- Official portal: kviconline.gov.in/pmegpeportal
+
+### Maximum Project Cost
+- Manufacturing: ${maxMfg1st} (1st loan), ${maxMfg2nd} (2nd loan/upgradation)
+- Service/Business: ${maxSvc1st} (1st loan), ${maxSvc2nd} (2nd loan)
+- Land cost CANNOT be included in project cost
+
+### Subsidy Rates (Margin Money) — ⭐ DYNAMIC from pmegp-rules.ts
+- General Male + Urban = ${subsidyGeneralMaleUrban.toFixed(0)}%
+- General Male + Rural = ${subsidyGeneralMaleRural.toFixed(0)}%
+- Special Category + Urban = ${subsidySpecialUrban.toFixed(0)}%
+- Special Category + Rural = ${subsidySpecialRural.toFixed(0)}%
+- Special includes: SC, ST, OBC, Women, Minorities, Ex-Servicemen, PH/Transgender, NER, Hill/Border, Aspirational Districts
+- WOMEN are always Special Category regardless of social category
+
+### Own Contribution — ⭐ DYNAMIC from pmegp-rules.ts
+- General Male: ${ownContribGeneral.toFixed(0)}% of project cost
+- Special Category: ${ownContribSpecial.toFixed(0)}% of project cost
+
+### 2nd Loan (Upgradation) — ⭐ DYNAMIC from pmegp-rules.ts
+- Available for existing PMEGP/REGP/MUDRA units
+- Subsidy: ${secondLoanGeneral.toFixed(0)}% (${secondLoanNERHill.toFixed(0)}% for NER & Hill States)
+- Max project: ${maxMfg2nd} (Mfg), ${maxSvc2nd} (Svc)
+
+### Eligibility
+- Age: 18+ years
+- No income ceiling
+- 8th pass required for projects >₹10L (Mfg) or >₹5L (Svc)
+- Only new units (except 2nd loan for existing PMEGP/REGP/MUDRA units)
+- One project per family (self + spouse)
+
+### EDP Training
+- Not required for projects up to ₹2 Lakh
+- 5 working days for ₹2L-5L
+- 10 working days for above ₹5L
+- Must complete before Margin Money claim
+
+### Lock-in Period
+- 3 years from Margin Money claim
+- Subsidy adjusted against loan after lock-in + physical verification
+- If unit closes, subsidy must be returned
+
+### Collateral
+- Up to ₹10 Lakh: No collateral (RBI mandate)
+- Up to ₹2 Crore: CGTMSE guarantee available
+
+### Negative List (NOT Allowed)
+- Meat/beedi/liquor/tobacco/toddy businesses
+- Polythene bags < 75 microns
+- Basic crop cultivation (Tea/Coffee/Rubber)
+- Basic sericulture/horticulture/animal husbandry
+- BUT: Dairy, Poultry, Aquaculture, value addition ARE allowed
+
+### Financial Model Defaults — ⭐ DYNAMIC from pmegp-rules.ts
+- Capacity utilization: ${capUtil}
+- Depreciation: Building SLN ${(DEPRECIATION.BUILDING.rate * 100).toFixed(0)}%, Machinery WDV ${(DEPRECIATION.MACHINERY.rate * 100).toFixed(0)}%, Furniture WDV ${(DEPRECIATION.FURNITURE.rate * 100).toFixed(0)}%
+- Loan repayment: Quarterly, 3-7 years
+- Payback period: 5 years, Implementation: project-specific (user-provided)
+
+### Current DPR Data:
+${JSON.stringify(dprData, null, 2)}
+
+## YOUR BEHAVIOR — MANDATORY RULES:
+
+### Proactive Warnings (MUST DO automatically):
+1. **Women = Special Category**: If Gender=Female, IMMEDIATELY tell her: "As a woman, you automatically qualify for Special Category subsidy — even if your social category is General! This means you get ${subsidySpecialUrban.toFixed(0)}% (Urban) or ${subsidySpecialRural.toFixed(0)}% (Rural) instead of ${subsidyGeneralMaleUrban.toFixed(0)}%/${subsidyGeneralMaleRural.toFixed(0)}%."
+2. **Negative List Check**: When user mentions a business activity, CHECK against the negative list and warn with the REASON (e.g., "Meat processing is not allowed due to socio-religious sensitivity")
+3. **Land Cost Warning**: If any cost item mentions "land" or "plot", WARN: "Land cost CANNOT be included in project cost — this is a COMMON REJECTION REASON"
+4. **Project Cost Limit Warning**: If cost exceeds ${maxMfg1st} (Mfg) or ${maxSvc1st} (Svc), warn that excess portion gets NO subsidy
+5. **Category Mismatch Warning**: If user selects Female + General category, auto-correct: "Women are Special Category — your subsidy will be calculated at Special rates"
+6. **Common Mistakes Checklist**: Before user submits/export, show ALL 10 common rejection reasons and verify each one
+
+### Explanations (MUST EXPLAIN when asked):
+7. **How Subsidy Math Works**: Explain clearly: "PMEGP is NOT a direct loan. You pay ${ownContribSpecial.toFixed(0)}-${ownContribGeneral.toFixed(0)}% from your pocket. Bank sanctions the rest. X% of that is government Margin Money, routed through the bank and held in your account/TDR for 3 years. During lock-in, your liability is the FULL sanctioned amount. After 3 years + physical verification, the Margin Money is adjusted (written off) and your net liability reduces. You then repay only the net liability after lock-in."
+8. **Scheme Comparison**: If user asks "Should I do PMEGP or MUDRA?", explain: PMEGP = subsidy, MUDRA = no subsidy but faster. For new businesses needing subsidy → PMEGP is best.
+9. **Application Process**: Guide through all 12 steps from portal visit to disbursement
+10. **Collateral Rights**: Tell users: "Up to ₹10L = NO collateral. Up to ₹2Cr = INSIST on CGTMSE. Don't let bank force property collateral."
+11. **EDP Training**: Calculate requirement based on project cost, link to udyami.org.in for online EDP, remind it's FREE
+12. **Lock-in Process**: Walk through 7-step subsidy adjustment process
+
+### Accuracy Rules (MUST FOLLOW):
+13. Always quote EXACT subsidy rates based on Gender+Category+Location — use the rates above, which come from pmegp-rules.ts
+14. Use Indian numbering system (Lakhs/Crores) for all amounts
+15. Format currency as ₹XX,XX,XXX (Indian format)
+16. Suggest realistic interest rates: 8-10% for PSU banks, 10-14% for private banks
+17. Reference 2023 revised guidelines: Transgender category, geo-tagging, 2nd loan, online EDP
+18. Be encouraging but accurate — don't promise subsidy that doesn't apply
+19. Maximum subsidy caps: Manufacturing max ₹17.5L, Service max ₹7L
+20. If project cost exceeds limits, explain that excess gets no subsidy`;
+}
+```
+
+---
+
+## 🖥️ UPDATED DASHBOARD VIEW WIREFRAME
+
+> The dashboard now includes PMEGP scheme info cards, eligibility checks, and negative list warnings. This replaces the simple dashboard from the original blueprint.
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  🏠 DPR Guide Pro — Dashboard                                    │
+│                                                                    │
+│  ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐    │
+│  │  📊 Project Cost │  💰 Your Subsidy  │  🏦 Bank Loan    │    │
+│  │  ₹0.00          │  ₹0.00 (0%)      │  ₹0.00          │    │
+│  │  Max: ₹50L/₹20L │  Max: 35%        │  90-95% of cost  │    │
+│  └─────────────────┘ └─────────────────┘ └─────────────────┘    │
+│                                                                    │
+│  ┌──────────────────────────────────────────────────────────┐    │
+│  │  🇮🇳 PMEGP Scheme Quick Info                            │    │
+│  │                                                          │    │
+│  │  • Central Sector Scheme by Ministry of MSME            │    │
+│  │  • Credit-linked subsidy: 15% to 35% of project cost    │    │
+│  │  • Own contribution: 5% (Special) / 10% (General)       │    │
+│  │  • Max project: ₹50L (Mfg) / ₹20L (Service)           │    │
+│  │  • Lock-in period: 3 years                              │    │
+│  │  • Repayment: 3-7 years                                 │    │
+│  │  • Only NEW micro-enterprises in non-farm sector (except 2nd loan) │    │
+│  │                                                          │    │
+│  │  [📋 Check Eligibility]  [📄 View Guidelines]           │    │
+│  └──────────────────────────────────────────────────────────┘    │
+│                                                                    │
+│  ┌──────────────────────────────────────────────────────────┐    │
+│  │  📝 DPR Form Progress                                    │    │
+│  │                                                          │    │
+│  │  ✅ Applicant Info      ⬜ Project Details               │    │
+│  │  ⬜ Cost of Project     ⬜ Sales & Revenue               │    │
+│  │  ⬜ Expenses            ⬜ Working Capital                │    │
+│  │  ⬜ Financial Params    ⬜ Review & Submit                │    │
+│  │                                                          │    │
+│  │  Overall: 12% complete                                   │    │
+│  │  [Continue Form →]                                       │    │
+│  └──────────────────────────────────────────────────────────┘    │
+│                                                                    │
+│  ┌──────────────────────┐ ┌──────────────────────────────────┐  │
+│  │  ⚠️ Eligibility Check │  📋 Documents Checklist           │  │
+│  │                      │                                    │  │
+│  │  ✅ Age: 18+         │  ✅ Aadhaar Card                   │  │
+│  │  ✅ New Unit         │  ✅ PAN Card                        │  │
+│  │  ⬜ Qualification    │  ⬜ Caste Certificate               │  │
+│  │  ⬜ Negative List    │  ⬜ Project Report                  │  │
+│  │  ✅ Sector Limit     │  ⬜ Address Proof                   │  │
+│  │                      │  ⬜ Bank Details                    │  │
+│  │  [Full Check →]      │  [Download Checklist →]            │  │
+│  └──────────────────────┘ └──────────────────────────────────┘  │
+│                                                                    │
+│  ┌──────────────────────────────────────────────────────────┐    │
+│  │  🚫 Activities NOT Allowed (Negative List)               │    │
+│  │  • Meat/Beedi/Liquor/Tobacco businesses                 │    │
+│  │  • Polythene bags < 75 microns                          │    │
+│  │  • Basic crop cultivation                                │    │
+│  │  • Basic animal husbandry (Dairy/Poultry ARE allowed)    │    │
+│  │  [View Full List →]                                      │    │
+│  └──────────────────────────────────────────────────────────┘    │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📦 PHASE 1: TYPE DEFINITIONS — `src/lib/dpr-types.ts`
+
+> **UPDATED**: Complete type definitions matching the KVIC DPRPACKAGE.xls DataSheet structure. Re-exports enums from `pmegp-rules.ts` and defines all DPR form interfaces.
+
+```typescript
+// src/lib/dpr-types.ts
+// COMPLETE type definitions matching the KVIC DPRPACKAGE.xls DataSheet structure
+
+// ─── Enums (import from pmegp-rules.ts) ───
+// Re-export all enums and labels from pmegp-rules
+export { GENDER, GENDER_LABELS, CATEGORY, CATEGORY_LABELS, LOCATION, LOCATION_LABELS, AGENCY, AGENCY_LABELS, SECTOR, SECTOR_LABELS, QUALIFICATION, QUALIFICATION_LABELS, BUILDING_OWNERSHIP, BUILDING_OWNERSHIP_LABELS, } from './pmegp-rules';
+
+// ─── DPR File Schema Versioning ───
+export const DPR_SCHEMA_VERSION = 1 as const;
+
+export interface DPRFile {
+  schemaVersion: typeof DPR_SCHEMA_VERSION;
+  createdAt: string;        // ISO 8601
+  updatedAt: string;        // ISO 8601
+  data: DPRData;
+}
+
+// ─── Schema Migration Engine ───
+// When the DPR data schema changes (e.g., adding isNERHill field),
+// this function upgrades older saved files to the current schema.
+// Add a new case for each schema version bump.
+
+export function migrateDPRData(data: any, fromVersion: number): DPRData {
+  let migrated = { ...data };
+
+  // Migration from v0 (legacy, no schema) → v1
+  if (fromVersion < 1) {
+    // v0 files didn't have isNERHill — default to false
+    if (migrated.project && !('isNERHill' in migrated.project)) {
+      migrated.project.isNERHill = false;
+    }
+    // v0 files may have used old field names — add any missing fields with defaults
+    if (migrated.project && !('noOfEmployees' in migrated.project)) {
+      migrated.project.noOfEmployees = 0;
+    }
+  }
+
+  // Future: Migration from v1 → v2
+  // if (fromVersion < 2) {
+  //   // Add new fields introduced in v2
+  // }
+
+  return migrated as DPRData;
+}
+
+// ─── Applicant Information ───
+export interface ApplicantInfo {
+  name: string;                    // B9
+  fatherSpouseName: string;        // G14 (was #REF! in Excel — we fix it)
+  gender: number;                  // M55: 1=Male, 2=Female, 3=Transgender
+  address: string;                 // B14
+  taluk: string;                   // D16
+  district: string;                // B17
+  pin: string;                     // H17
+  state: string;                   // B18 (was #REF! in Excel — we fix it)
+  email: string;                   // B19 (was #REF! in Excel — we fix it)
+  mobile: string;                  // F19
+  phone: string;                   // H21 (was #REF! in Excel — we fix it)
+  qualification: number;           // M83: 1-7 index (see QUALIFICATION enum)
+  technicalQualification: string;  // E22
+  category: number;                // M70: 1-9 (see CATEGORY enum)
+  // NOTE: M56 (socialCategory) is NOT used for subsidy calculations.
+  // Only M70 (category) is used by the Excel G87 formula. M56 is for display only.
+  // If you need M56 for form display, add: socialCategoryDisplay?: number;
+}
+
+// ─── Project Configuration ───
+export interface ProjectConfig {
+  projectName: string;             // B31
+  legalStatus: string;             // B34
+  sponsoringAgency: number;        // M59: 1=KVIC, 2=KVIB, 3=DIC, 4=Coir Board
+  location: number;                // M64: 1=Rural, 2=Urban
+  sector: number;                  // M80: 1=Manufacturing, 2=Service
+  buildingOwnership: number;       // M91: 1=Own, 2=Rented, 3=Leased
+  isSecondLoan: boolean;           // Whether this is 2nd loan/upgradation
+  isNERHill: boolean;              // ⭐ Whether applicant is in NER/Hill state — affects 2nd loan subsidy (20% vs 15%)
+  activityDescription: string;     // Free text for project description
+  noOfEmployees: number;           // For per capita investment check
+}
+
+// ─── Building Details (7 line items, rows 41-47) ───
+export interface BuildingItem {
+  name: string;       // B41:B47
+  area: number;       // F41:F47 (Area in sq.ft)
+  ratePerSqFt: number;// G41:G47 (Rate per sq.ft)
+  amount: number;     // H41:H47 = IF(F>=1, F*G, G)
+}
+
+// ─── Machinery Details (13 line items, rows 54-66) ───
+export interface MachineryItem {
+  name: string;       // B54:B66
+  quantity: number;   // F54:F66
+  rate: number;       // G54:G66
+  amount: number;     // H54:H66 = IF(F>=1, F*G, G)
+}
+
+// ─── Other Capital Costs ───
+export interface OtherCosts {
+  preliminaryCost: number;    // H70 — Pre-operative expenses
+  furnitureFixtures: number;  // H72 — Furniture & Fixtures
+  contingency: number;        // H74 — Contingency/Miscellaneous (singular in code, "Contingencies" in display labels)
+}
+
+// ─── Working Capital Items (rows 70-74) ───
+// Excel columns: Element of Working Capital | No. of Days | Amount
+export type WorkingCapitalElement =
+  | "Stock in Process"
+  | "Finished Goods"
+  | "Receivables";
+
+export interface WorkingCapitalItem {
+  element: WorkingCapitalElement;  // Exact Excel category
+  noOfDays: number;                // Excel "No. of Days" column
+  amount: number;                  // Excel "Amount" column
+}
+
+// ─── Sales/Revenue Details (rows 91-101) ───
+export interface SalesItem {
+  productName: string;       // B94:B101
+  ratePerUnit: number;       // F94:F101
+  quantity: number;          // G94:G101 — Quantity (no period assumption)
+  quantityPeriod: "monthly" | "annual";  // Period for quantity — matches Excel layout
+  amount: number;            // H94:H101 = IF(G>=1, G*F, F)
+}
+
+// ─── Raw Material Details (rows 105-115) ───
+export interface RawMaterialItem {
+  name: string;              // B107:B115
+  unit: string;              // E107:E115
+  ratePerUnit: number;       // F107:F115
+  requiredUnits: number;     // G107:G115
+  amount: number;            // H107:H115 = IF(G>=1, G*F, F)
+}
+
+// ─── Labor (WAGES section in Excel, rows 118-122) ───
+export interface LaborItem {
+  designation: string;       // B119 — Worker designation
+  noOfWorkers: number;       // E119 — Number of workers
+  monthlyWage: number;       // F119 — Monthly wage per worker
+  totalMonths: number;       // Months worked in first year (typically 12)
+  annualAmount: number;      // H119 = noOfWorkers * monthlyWage * totalMonths
+}
+
+// ─── Staff Salary (SALARY DETAILS section in Excel, rows 123-126) ───
+export interface StaffSalaryItem {
+  designation: string;       // B123 — Staff designation
+  noOfStaff: number;         // E123 — Number of staff
+  monthlySalary: number;     // F123 — Monthly salary per person
+  totalMonths: number;       // Months in first year (typically 12)
+  annualAmount: number;      // H123 = noOfStaff * monthlySalary * totalMonths
+}
+
+// ─── Other Expenses (exact Excel categories — all per annum) ───
+// Matches the "Other Expenses" section in KVIC DPRPACKAGE.xls
+export interface OtherExpenses {
+  powerRequirement: number;          // Power & Fuel
+  repairAndMaintenance: number;      // Repair & Maintenance
+  powerAndFuel: number;              // Additional power/fuel costs
+  telephoneExpenses: number;         // Telephone
+  stationeryAndPostage: number;      // Stationery & Postage
+  advertisementAndPublicity: number; // Advertisement & Publicity
+  buildingRent: number;              // Building Rent
+  miscellaneousExpenditure: number;  // Miscellaneous
+}
+
+// ─── Financial Parameters ───
+export interface FinancialParams {
+  interestRate: number;         // Bank interest rate (default 11%)
+  loanTenureYears: number;      // 3-7 years
+  implementationMonths: number | null; // Project-specific — user must enter (no default)
+  paybackYears: number;         // 5 years
+  capacityUtilization: number[];// [0.70, 0.80, 0.90, 0.90, 0.90]
+}
+
+// ─── Complete DPR Data ───
+export interface DPRData {
+  applicant: ApplicantInfo;
+  project: ProjectConfig;
+  buildingItems: BuildingItem[];
+  machineryItems: MachineryItem[];
+  otherCosts: OtherCosts;
+  workingCapitalItems: WorkingCapitalItem[];
+  salesItems: SalesItem[];
+  rawMaterialItems: RawMaterialItem[];
+  laborItems: LaborItem[];           // WAGES section — workers/daily wage
+  staffSalaryItems: StaffSalaryItem[]; // SALARY DETAILS section — salaried staff
+  otherExpenses: OtherExpenses;
+  financialParams: FinancialParams;
+  
+  // Computed values (not user input)
+  computed?: {
+    totalBuildingCost: number;
+    totalMachineryCost: number;
+    totalCapitalExpenditure: number;
+    totalWorkingCapital: number;
+    totalProjectCost: number;
+    ownContributionPct: number;
+    ownContributionAmt: number;
+    bankLoanAmt: number;               // Full sanctioned loan (90%/95%)
+    subsidyPct: number;
+    subsidyAmt: number;                 // Margin Money — held in account/TDR during lock-in
+    netLiabilityAfterLockIn: number;    // Bank loan minus Margin Money — post-lock-in repayment amount
+    maxProjectCostAllowed: number;
+    isWithinLimit: boolean;
+    eligibilityIssues: string[];
+    edpTrainingRequired: boolean;
+    edpTrainingDays: number;
+    collateralFree: boolean;
+  };
+}
+
+// ─── Report Section Types ───
+export interface LoanRepaymentSchedule {
+  year: number;
+  quarter: number;
+  openingBalance: number;
+  installment: number;
+  principal: number;
+  interest: number;
+  closingBalance: number;
+}
+
+export interface DepreciationSchedule {
+  year: number;
+  buildingOpening: number;
+  buildingDep: number;
+  buildingClosing: number;
+  machineryOpening: number;
+  machineryDep: number;
+  machineryClosing: number;
+  furnitureOpening: number;
+  furnitureDep: number;
+  furnitureClosing: number;
+  totalDepreciation: number;
+}
+
+export interface ProfitLossStatement {
+  year: number;
+  capacityUtil: number;
+  sales: number;
+  rawMaterials: number;
+  wages: number;
+  rent: number;
+  electricity: number;
+  insurance: number;
+  maintenance: number;
+  marketing: number;
+  admin: number;
+  otherExpenses: number;
+  totalExpenses: number;
+  grossProfit: number;
+  depreciation: number;
+  interest: number;
+  netProfitBeforeTax: number;
+  tax: number;
+  netProfitAfterTax: number;
+  // ⚠️ Tax rate: Assume 25% for micro-enterprises (confirm with CA). Include tax provision for accurate DSCR and bank acceptance.
+}
+
+export interface BalanceSheetItem {
+  year: number;
+  // Assets
+  fixedAssetsGross: number;
+  accumulatedDepreciation: number;
+  fixedAssetsNet: number;
+  currentAssets: number;
+  totalAssets: number;
+  // Liabilities
+  capital: number;
+  reserves: number;
+  bankLoan: number;
+  currentLiabilities: number;
+  totalLiabilities: number;
+}
+
+export interface CashFlowItem {
+  year: number;
+  netProfit: number;
+  depreciation: number;
+  interest: number;
+  operatingCashFlow: number;
+  loanRepayment: number;
+  netCashFlow: number;
+  cumulativeCashFlow: number;
+}
+
+export interface DSCRItem {
+  year: number;
+  netCashAccrual: number;
+  principalRepayment: number;
+  interestPayment: number;
+  totalDebtService: number;
+  dscr: number;
+}
+
+export interface BreakEvenAnalysis {
+  fixedCosts: number;
+  variableCosts: number;
+  sales: number;
+  contribution: number;
+  breakEvenPoint: number;
+  breakEvenPct: number;
+}
+
+// ─── DPR Report (all computed sections) ───
+export interface DPRReport {
+  projectAtGlance: Record<string, any>;
+  costOfProject: Record<string, any>;
+  meansOfFinance: Record<string, any>;
+  loanRepayment: LoanRepaymentSchedule[];
+  depreciation: DepreciationSchedule[];
+  profitLoss: ProfitLossStatement[];
+  balanceSheet: BalanceSheetItem[];
+  cashFlow: CashFlowItem[];
+  dscr: DSCRItem[];
+  breakEven: BreakEvenAnalysis;
+}
+```
+
+---
+
+## 📦 PHASE 2: CUSTOM TITLEBAR — `src/components/titlebar.tsx`
+
+This is the **most important new component** — replaces the default Windows title bar with a custom one that looks like Windows 11.
+
+```typescript
+// src/components/titlebar.tsx
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useElectron } from '@/hooks/use-electron';
+import { Minus, Square, X, Copy } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+export function Titlebar() {
+  const { isElectron, minimize, maximize, close, isMaximized } = useElectron();
+  const [maximized, setMaximized] = useState(false);
+
+  useEffect(() => {
+    if (isElectron) {
+      isMaximized().then(setMaximized);
+      window.electronAPI?.onWindowStateChange((state) => {
+        setMaximized(state === 'maximized');
+      });
+    }
+  }, [isElectron]);
+
+  // Hide custom titlebar if not running in Electron
+  if (!isElectron) return null;
+
+  return (
+    <div className="flex items-center h-9 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 select-none"
+         style={{ WebkitAppRegion: 'drag' } as any}>
+      {/* App icon */}
+      <div className="flex items-center gap-2 px-3">
+        <img src="/dpr-logo.png" alt="DPR" className="w-5 h-5 rounded" />
+        <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+          DPR Guide Pro
+        </span>
+      </div>
+
+      {/* Spacer — draggable area */}
+      <div className="flex-1" />
+
+      {/* Windows controls */}
+      <div className="flex" style={{ WebkitAppRegion: 'no-drag' } as any}>
+        <button onClick={minimize}
+          className="w-11 h-9 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+          <Minus className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+        </button>
+        <button onClick={maximize}
+          className="w-11 h-9 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+          {maximized ? (
+            <Copy className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
+          ) : (
+            <Square className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
+          )}
+        </button>
+        <button onClick={close}
+          className="w-11 h-9 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors">
+          <X className="w-4 h-4 text-slate-600 dark:text-slate-400 hover:text-white" />
+        </button>
+      </div>
+    </div>
+  );
+}
+```
+
+**Windows 11 Snap Layouts**: The maximize button should support Windows 11 snap layouts. Electron handles this automatically when using the native window frame or when the `frame: false` + custom titlebar approach is used correctly.
+
+---
+
+## 📦 PHASE 3: APP SHELL — `src/components/app-shell.tsx`
+
+Updated to include the custom titlebar:
+
+```typescript
+// App Shell layout:
+// 1. Titlebar at the top (custom Windows titlebar)
+// 2. pt-9 (padding-top for titlebar)
+// 3. File menu in footer (Save/Load/Export)
+// 4. Desktop notification support
+
+'use client';
+
+import { Titlebar } from './titlebar';
+import { Sidebar } from './sidebar';
+import { AIChatPanel } from './ai-chat-panel';
+import { useUIStore } from '@/store/ui-store';
+import { useElectron } from '@/hooks/use-electron';
+// ... view imports
+
+export function AppShell() {
+  const { activeView } = useUIStore();
+  const { isElectron } = useElectron();
+
+  return (
+    <div className="flex flex-col h-screen bg-white dark:bg-slate-950 overflow-hidden">
+      {/* Custom Titlebar (Electron only) */}
+      <Titlebar />
+
+      {/* Main Layout */}
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar />
+        <main className="flex-1 flex flex-col overflow-hidden">
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-6">
+            {activeView === 'dashboard' && <DashboardView />}
+            {activeView === 'form' && <DPRFormView />}
+            {activeView === 'ai-assistant' && <AIAssistantView />}
+            {activeView === 'report' && <ReportView />}
+            {activeView === 'settings' && <SettingsView />}
+          </div>
+
+          {/* AI Chat Panel (collapsible) */}
+          <AIChatPanel />
+
+          {/* Footer */}
+          <footer className="h-8 flex items-center justify-between px-4 text-xs text-slate-500 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
+            <span>PMEGP • Government of India</span>
+            <div className="flex items-center gap-3">
+              {isElectron && (
+                <>
+                  <button className="hover:text-emerald-600">📁 Save</button>
+                  <button className="hover:text-emerald-600">📂 Load</button>
+                  <button className="hover:text-emerald-600">📊 Export Excel</button>
+                </>
+              )}
+              <span>v1.0.0</span>
+            </div>
+          </footer>
+        </main>
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## 📦 PHASE 4: SETTINGS VIEW — Updated for Desktop
+
+The Settings view now includes **desktop-specific** sections:
+
+```
+┌──────────────────────────────────────────────────────┐
+│  ⚙️ Settings                                         │
+│                                                      │
+│  ┌──────────────────────────────────────────────┐    │
+│  │  🤖 AI Configuration                        │    │
+│  │                                              │    │
+│  │  Provider:  [Built-in ▼] / [Custom API]     │    │
+│  │  API Key:       [••••••••••••] [👁️]          │    │
+│  │  Base URL:      [https://api.openai.com/v1]  │    │  ← Default OpenAI endpoint
+│  │  Model Name:    [gpt-4o ▼]                   │    │
+│  │  ⭐ OpenAI SDK — enter your API key above to enable AI features                    │    │
+│  │                                              │    │
+│  │  ┌──────────────────────────────────────┐    │    │
+│  │  │  🔌 Connection Test                  │    │    │
+│  │  │  Status: ● Connected  Latency: 1.2s │    │    │
+│  │  │  [🔄 Test Now] [✅ Auto-Test on Start]│    │    │
+│  │  └──────────────────────────────────────┘    │    │
+│  │                                              │    │
+│  │  Auto-Validation:                            │    │
+│  │  ☑ Validate on save                         │    │
+│  │  ☑ Auto-test on app start                   │    │
+│  │  ☑ Show status in title bar                 │    │
+│  │  ☑ Warn before AI calls if disconnected     │    │
+│  │                                              │    │
+│  │  [Save Settings]                            │    │
+│  └──────────────────────────────────────────────┘    │
+│                                                      │
+│  ┌──────────────────────────────────────────────┐    │
+│  │  💾 Data & File Management                  │    │    │
+│  │  [💾 Save DPR to File]  (.json)             │    │
+│  │  [📂 Load DPR from File] (.json)            │    │
+│  │  [📊 Export as Excel]    (.xlsx)            │    │
+│  │  [📄 Export Report PDF]  (.pdf)             │    │
+│  │  ─────────────────────────────              │    │
+│  │  Default save folder: [C:\Users\...\DPR\]   │    │
+│  │  ☑ Auto-save every 5 minutes               │    │
+│  │  ☑ Create backup on save                   │    │
+│  │  ─────────────────────────────              │    │
+│  │  [⚠️ Reset All Data]                        │    │
+│  └──────────────────────────────────────────────┘    │
+│                                                      │
+│  ┌──────────────────────────────────────────────┐    │
+│  │  🖥️ Desktop Settings                       │    │    │
+│  │  ☑ Minimize to system tray on close         │    │
+│  │  ☑ Show desktop notifications               │    │
+│  │  ☑ Start with Windows (autostart)           │    │
+│  │  Window size: [Remember last] [Always max]  │    │
+│  └──────────────────────────────────────────────┘    │
+│                                                      │
+│  ┌──────────────────────────────────────────────┐    │
+│  │  🎨 Appearance                              │    │
+│  │  Theme: [☀️ Light] [🌙 Dark] [🖥️ System]    │    │
+│  │  Sidebar: [Expanded] [Collapsed] [Auto]     │    │
+│  └──────────────────────────────────────────────┘    │
+└──────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📦 PHASE 5: EXCEL EXPORT — `electron/excel-export.ts`
+
+> **⚠️ NOTE**: This is the AUTHORITATIVE Excel export implementation — a simplified generator that outputs the same data fields as the legacy DPRPACKAGE.xls but does NOT reproduce its formatting, merged cells, formulas, or section behavior. The inline export in `ipc-handlers.ts` (Phase 0.6) is a quick-test stub. For production, refactor `ipc-handlers.ts` to call this function instead.
+
+Simplified Excel export with the same data fields as the legacy DPRPACKAGE.xls — but without reproducing its merged cells, formulas, conditional formatting, or section behavior. Data fields match `dpr-types.ts` (Phase 1):
+
+```typescript
+// electron/excel-export.ts
+import ExcelJS from 'exceljs';
+
+export async function exportDRPToExcel(dprData: any, filePath: string): Promise<void> {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'DPR Guide Pro';
+  workbook.created = new Date();
+
+  // ── Sheet 1: DataSheet ──
+  const dataSheet = workbook.addWorksheet('DataSheet');
+  dataSheet.addRow(['DATA INPUT SHEET']);
+  dataSheet.addRow([]);
+  dataSheet.addRow(['Preference for sponsoring agency', dprData.project?.sponsoringAgency]);
+  dataSheet.addRow(['1.1', 'Name of the Applicant/Institution', dprData.applicant?.name]);
+  dataSheet.addRow(['2', 'Gender', dprData.applicant?.gender]);
+  dataSheet.addRow(['3', 'Address', dprData.applicant?.address]);
+  dataSheet.addRow(['', 'Taluk/Block', dprData.applicant?.taluk]);
+  dataSheet.addRow(['', 'District', dprData.applicant?.district]);
+  dataSheet.addRow(['', 'Pin', dprData.applicant?.pin]);
+  dataSheet.addRow(['', 'State', dprData.applicant?.state]);
+  dataSheet.addRow(['4', 'Qualification', dprData.applicant?.qualification]);
+  dataSheet.addRow(['5', 'Category', dprData.applicant?.category]);
+
+  // Building Details
+  dataSheet.addRow([]);
+  dataSheet.addRow(['BUILDING DETAILS']);
+  dataSheet.addRow(['Particulars', 'Area', 'Rate/Sq.ft', 'Amount in Rs.']);
+  const buildingItems = dprData.buildingItems || [];
+  let totalBuilding = 0;
+  for (const b of buildingItems) {
+    if (b.name) { dataSheet.addRow([b.name, b.area, b.ratePerSqFt, b.amount]); totalBuilding += b.amount || 0; }
+  }
+  dataSheet.addRow(['Total', '', '', totalBuilding]);
+
+  // Machinery Details
+  dataSheet.addRow([]);
+  dataSheet.addRow(['MACHINERY DETAILS']);
+  dataSheet.addRow(['Particulars', 'Qty.', 'Rate', 'Amount in Rs.']);
+  const machineryItems = dprData.machineryItems || [];
+  let totalMachinery = 0;
+  for (const m of machineryItems) {
+    if (m.name) { dataSheet.addRow([m.name, m.quantity, m.rate, m.amount]); totalMachinery += m.amount || 0; }
+  }
+  dataSheet.addRow(['Total', '', '', totalMachinery]);
+
+  // Other Costs
+  dataSheet.addRow([]);
+  dataSheet.addRow(['OTHER CAPITAL COSTS']);
+  dataSheet.addRow(['Preliminary/Pre-operative', dprData.otherCosts?.preliminaryCost || 0]);
+  dataSheet.addRow(['Furniture & Fixtures', dprData.otherCosts?.furnitureFixtures || 0]);
+  dataSheet.addRow(['Contingency', dprData.otherCosts?.contingency || 0]);
+
+  // Working Capital (exact Excel column mapping: Element | No. of Days | Amount)
+  dataSheet.addRow([]);
+  dataSheet.addRow(['WORKING CAPITAL']);
+  dataSheet.addRow(['Element of Working Capital', 'No. of Days', 'Amount']);
+  const wcItems = dprData.workingCapitalItems || [];
+  let totalWorkingCapital = 0;
+  for (const w of wcItems) {
+    dataSheet.addRow([w.element, w.noOfDays, w.amount]);
+    totalWorkingCapital += w.amount || 0;
+  }
+  dataSheet.addRow(['Total', '', totalWorkingCapital]);
+
+  // Sales/Revenue (exact Excel column mapping)
+  dataSheet.addRow([]);
+  dataSheet.addRow(['SALES / REVENUE']);
+  dataSheet.addRow(['Product', 'Rate/Unit', 'Quantity', 'Period', 'Annual Amount']);
+  const salesItems = dprData.salesItems || [];
+  let totalAnnualSales = 0;
+  for (const s of salesItems) {
+    const annual = s.amount || (s.quantityPeriod === 'monthly'
+      ? (s.ratePerUnit || 0) * (s.quantity || 0) * 12
+      : (s.ratePerUnit || 0) * (s.quantity || 0));
+    dataSheet.addRow([s.productName, s.ratePerUnit, s.quantity, s.quantityPeriod || 'monthly', annual]);
+    totalAnnualSales += annual;
+  }
+  dataSheet.addRow(['Total Annual Sales', '', '', '', totalAnnualSales]);
+
+  // Raw Materials
+  dataSheet.addRow([]);
+  dataSheet.addRow(['RAW MATERIALS']);
+  dataSheet.addRow(['Material', 'Unit', 'Rate/Unit', 'Required Units', 'Annual Amount']);
+  const rawMaterialItems = dprData.rawMaterialItems || [];
+  let totalRawMaterials = 0;
+  for (const r of rawMaterialItems) {
+    const annual = r.amount || (r.ratePerUnit || 0) * (r.requiredUnits || 0) * 12;
+    dataSheet.addRow([r.name, r.unit, r.ratePerUnit, r.requiredUnits, annual]);
+    totalRawMaterials += annual;
+  }
+  dataSheet.addRow(['Total Raw Materials', '', '', '', totalRawMaterials]);
+
+  // Wages (Labor — WAGES section in Excel)
+  dataSheet.addRow([]);
+  dataSheet.addRow(['WAGES']);
+  dataSheet.addRow(['Designation', 'No. of Workers', 'Monthly Wage', 'Months', 'Annual Amount']);
+  const laborItems = dprData.laborItems || [];
+  let totalWages = 0;
+  for (const w of laborItems) {
+    dataSheet.addRow([w.designation, w.noOfWorkers, w.monthlyWage, w.totalMonths, w.annualAmount]);
+    totalWages += w.annualAmount || 0;
+  }
+  dataSheet.addRow(['Total Wages', '', '', '', totalWages]);
+
+  // Staff Salary (SALARY DETAILS section in Excel)
+  dataSheet.addRow([]);
+  dataSheet.addRow(['SALARY DETAILS']);
+  dataSheet.addRow(['Designation', 'No. of Staff', 'Monthly Salary', 'Months', 'Annual Amount']);
+  const staffSalaryItems = dprData.staffSalaryItems || [];
+  let totalSalaries = 0;
+  for (const s of staffSalaryItems) {
+    dataSheet.addRow([s.designation, s.noOfStaff, s.monthlySalary, s.totalMonths, s.annualAmount]);
+    totalSalaries += s.annualAmount || 0;
+  }
+  dataSheet.addRow(['Total Salaries', '', '', '', totalSalaries]);
+
+  // Project Cost Summary & Means of Finance
+  const totalCapitalExpenditure = totalBuilding + totalMachinery + (dprData.otherCosts?.preliminaryCost || 0) + (dprData.otherCosts?.furnitureFixtures || 0) + (dprData.otherCosts?.contingency || 0);
+  const totalProjectCost = totalCapitalExpenditure + totalWorkingCapital;
+  const computed = dprData.computed || {};
+  dataSheet.addRow([]);
+  dataSheet.addRow(['PROJECT COST SUMMARY']);
+  dataSheet.addRow(['Capital Expenditure', totalCapitalExpenditure]);
+  dataSheet.addRow(['Working Capital', totalWorkingCapital]);
+  dataSheet.addRow(['TOTAL PROJECT COST', totalProjectCost]);
+  dataSheet.addRow([]);
+  dataSheet.addRow(['MEANS OF FINANCE']);
+  dataSheet.addRow(['Own Contribution', `${((computed.ownContributionPct || 0.05) * 100).toFixed(0)}%`, computed.ownContributionAmt || totalProjectCost * (computed.ownContributionPct || 0.05)]);
+  dataSheet.addRow(['Bank Finance', `${((1 - (computed.ownContributionPct || 0.05)) * 100).toFixed(0)}%`, computed.bankLoanAmt || totalProjectCost * (1 - (computed.ownContributionPct || 0.05))]);
+  dataSheet.addRow(['Subsidy (Margin Money)', `${((computed.subsidyPct || 0.25) * 100).toFixed(0)}%`, computed.subsidyAmt || totalProjectCost * (computed.subsidyPct || 0.25)]);
+  dataSheet.addRow(['Net Liability After Lock-In', computed.netLiabilityAfterLockIn]);
+
+  // ── Sheet 2: DPR_print ──
+  const dprPrint = workbook.addWorksheet('DPR_print');
+  dprPrint.addRow(['PROJECT AT A GLANCE - TOP SHEET']);
+  dprPrint.addRow(['1', 'Name of the Beneficiary', dprData.applicant?.name]);
+  dprPrint.addRow(['2', 'Constitution', dprData.project?.legalStatus]);
+  dprPrint.addRow(['3', 'Total Project Cost', totalProjectCost]);
+  dprPrint.addRow(['4', 'Own Contribution', `${((computed.ownContributionPct || 0.05) * 100).toFixed(0)}%`, computed.ownContributionAmt]);
+  dprPrint.addRow(['5', 'Bank Loan (Sanctioned)', computed.bankLoanAmt]);
+  dprPrint.addRow(['6', 'Subsidy (Margin Money)', `${((computed.subsidyPct || 0.25) * 100).toFixed(0)}%`, computed.subsidyAmt]);
+  dprPrint.addRow(['7', 'Net Liability After Lock-In', computed.netLiabilityAfterLockIn]);
+  dprPrint.addRow([]);
+  dprPrint.addRow(['DETAILED PROJECT REPORT']);
+  dprPrint.addRow(['1', 'INTRODUCTION', dprData.project?.activityDescription || '']);
+  dprPrint.addRow(['2', 'ABOUT THE BENEFICIARY', dprData.applicant?.name]);
+  dprPrint.addRow(['3', 'COST OF PROJECT']);
+  dprPrint.addRow(['', 'Building', totalBuilding]);
+  dprPrint.addRow(['', 'Machinery', totalMachinery]);
+  dprPrint.addRow(['', 'Preliminary', dprData.otherCosts?.preliminaryCost || 0]);
+  dprPrint.addRow(['', 'Furniture & Fixtures', dprData.otherCosts?.furnitureFixtures || 0]);
+  dprPrint.addRow(['', 'Contingency', dprData.otherCosts?.contingency || 0]);
+  dprPrint.addRow(['', 'Total Capital Expenditure', totalCapitalExpenditure]);
+  dprPrint.addRow(['', 'Working Capital', totalWorkingCapital]);
+  dprPrint.addRow(['', 'TOTAL PROJECT COST', totalProjectCost]);
+  // ... Loan Repayment Schedule, Depreciation, P&L, Balance Sheet, Cash Flow, DSCR, BEP
+
+  // ── Sheet 3: Project_Report ──
+  const projReport = workbook.addWorksheet('Project_Report');
+  projReport.addRow(['DETAILED PROJECT REPORT']);
+  projReport.addRow(['1', 'Name of Project', dprData.project?.projectName]);
+  projReport.addRow(['2', 'Name of Promoter', dprData.applicant?.name]);
+  projReport.addRow(['3', 'Father/Spouse Name', dprData.applicant?.fatherSpouseName]);
+  projReport.addRow(['4', 'State', dprData.applicant?.state]);
+  projReport.addRow(['5', 'Total Project Cost', totalProjectCost]);
+  // ... complete 19 sections
+
+  // ── Sheet 4: Application_form ──
+  const appForm = workbook.addWorksheet('Application_form');
+  appForm.addRow(['PMEGP APPLICATION FORM']);
+  appForm.addRow(['Name of Applicant', dprData.applicant?.name]);
+  appForm.addRow(['Address', dprData.applicant?.address]);
+  appForm.addRow(['Category', dprData.applicant?.category]);
+  appForm.addRow(['TOTAL PROJECT COST', totalProjectCost]);
+
+  // ── Sheet 5: DPR_FRONT ──
+  const front = workbook.addWorksheet('DPR_FRONT');
+  front.addRow(['Project Report on', dprData.project?.projectName]);
+  front.addRow(['Promoter:', dprData.applicant?.name]);
+  front.addRow(['Prepared By:', 'DPR Guide Pro']);
+  front.addRow(['Date:', new Date().toLocaleDateString('en-IN')]);
+
+  await workbook.xlsx.writeFile(filePath);
+}
+```
+
+---
+
+## 🔄 COMPLETE BUILD ORDER (UPDATED FOR ELECTRON)
+
+### Phase 0: Electron Setup (DO THIS FIRST!)
+1. Install dependencies: `bun add -d electron electron-builder concurrently wait-on tsup`
+2. Install: `bun add exceljs openai`
+3. Update `package.json` with scripts and build config
+4. Create `electron-builder.yml`
+5. Create `electron/main.ts`
+6. Create `electron/preload.ts`
+7. Create `electron/ipc-handlers.ts` (with AI handlers!)
+8. Create `electron/tray.ts`
+9. Create `electron/window.ts`
+10. Create `build/icon.ico` from `dpr-logo.png`
+11. Update `next.config.ts` with `output: 'export'`
+12. Create `src/hooks/use-electron.ts`
+13. **TEST**: `bun run dev:electron` — verify window opens with Next.js content
+
+### Phase 0.5: PMEGP Rules Engine (BEFORE Phase 1!)
+14. `src/lib/pmegp-rules.ts` — **⭐ CREATE THIS FIRST** (all other files import from it)
+15. `src/lib/ai-system-prompt.ts` — Updated PMEGP-aware AI system prompt
+
+### Phase 1: Foundation
+16. `src/lib/dpr-types.ts` — (imports enums from pmegp-rules.ts)
+17. `src/lib/dpr-calculations.ts`
+18. `src/store/dpr-store.ts`
+19. `src/store/ui-store.ts`
+20. `src/store/ai-store.ts`
+21. `src/lib/format-currency.ts`
+
+### Phase 2: Desktop UI Shell
+22. `src/components/titlebar.tsx` — Custom Windows titlebar
+23. `src/components/app-shell.tsx` — Main layout with titlebar
+24. `src/components/sidebar.tsx` — Navigation
+25. `src/components/ai-chat-panel.tsx` — Collapsible chat
+
+### Phase 3: Views
+26. `src/components/views/dashboard-view.tsx`
+27. `src/components/views/dpr-form-view.tsx`
+28. `src/components/views/ai-assistant-view.tsx`
+29. `src/components/views/report-view.tsx`
+30. `src/components/views/settings-view.tsx` — Desktop settings!
+
+### Phase 4: Form Sections
+31-37. (Same as before — all 7 form section components)
+
+### Phase 5: Report Sections
+38-47. (Same as before — all 10 report section components)
+
+### Phase 6: Wire Up
+48. `src/app/page.tsx` — Render AppShell
+
+### Phase 7: Build & Package
+49. Build Next.js: `bun run build` (creates `out/` folder)
+50. Compile Electron: `bun run build:electron` (uses tsup → outputs to dist-electron/)
+51. Package: `electron-builder --win`
+52. Output: `dist/DPR-Guide-Pro-Setup-1.0.0.exe` ✅
+
+---
+
+## 🖥️ WINDOWS-SPECIFIC FEATURES
+
+### System Tray
+- Minimize to tray on close (optional, configurable)
+- Tray icon shows app icon
+- Right-click menu: Open, New DPR, Quit
+- Double-click tray icon to restore window
+
+### Native File Dialogs
+- Save DPR data as `.json` (native Windows Save dialog)
+- Load DPR data from `.json` (native Windows Open dialog)
+- Export to `.xlsx` Excel file
+- Export report as `.pdf`
+
+### Windows Notifications
+- "DPR saved successfully"
+- "AI connection restored"
+- "Form 80% complete — keep going!"
+
+### Auto-Start with Windows
+- Optional: Register app in Windows startup
+- Configurable in Settings → Desktop
+
+---
+
+## 💾 AUTO-SAVE & EXAMPLE DATA — UX Enhancements
+
+> These features dramatically improve the user experience for PMEGP applicants who may be first-time computer users filling a complex multi-section form.
+
+### Auto-Save Implementation
+
+```typescript
+// In src/store/dpr-store.ts — add auto-save timer
+// The Zustand store already persists to localStorage.
+// Add a 5-minute auto-save timer that also saves to the Electron file system.
+
+interface DPRStore extends DPRData {
+  // ... existing fields
+  lastAutoSaved: string | null;  // ISO timestamp of last auto-save
+  autoSaveEnabled: boolean;       // Default: true
+}
+
+// In the React component that uses the store:
+// useEffect(() => {
+//   if (!autoSaveEnabled) return;
+//   const interval = setInterval(() => {
+//     const state = useDPRStore.getState();
+//     const json = JSON.stringify(state, null, 2);
+//     // Save to Electron via IPC (no dialog — auto-saves to app data folder)
+//     window.electronAPI.saveDPR(json);  // Or use a dedicated auto-save IPC channel
+//     useDPRStore.setState({ lastAutoSaved: new Date().toISOString() });
+//   }, 5 * 60 * 1000);  // 5 minutes
+//   return () => clearInterval(interval);
+// }, [autoSaveEnabled]);
+```
+
+> **Footer display**: "Auto-saved 2 min ago" — shown in the footer bar next to the Save/Load buttons.
+
+### Example Data Loader
+
+> New users often don't know what values to fill. A "Load Example" button pre-fills the form with realistic PMEGP data so they can see how a complete DPR looks.
+
+```typescript
+// In src/lib/example-data.ts
+// Pre-filled DPR data for a realistic Manufacturing project (Rural, SC Male)
+
+export const EXAMPLE_DPR_MANUFACTURING: DPRData = {
+  applicant: {
+    name: 'Rajesh Kumar',
+    fatherName: 'Suresh Kumar',
+    age: 28,
+    gender: 1,      // Male
+    category: 1,     // SC
+    address: 'Village Ramnagar, Post Sundarpur',
+    city: 'Varanasi',
+    state: 'Uttar Pradesh',
+    phone: '9876543210',
+    email: 'rajesh.kumar@example.com',
+    qualification: 3, // 10th Pass
+  },
+  project: {
+    projectName: 'Rajesh Food Processing Unit',
+    legalStatus: 'Proprietorship',
+    sponsoringAgency: 1,  // KVIC
+    location: 1,          // Rural
+    sector: 1,            // Manufacturing
+    buildingOwnership: 2, // Rented
+    isSecondLoan: false,
+    isNERHill: false,
+    activityDescription: 'Food processing and packaging unit for locally sourced grains and spices',
+    noOfEmployees: 8,
+  },
+  buildingItems: [
+    { name: 'Work Shed', area: 500, ratePerSqFt: 800, amount: 400000 },
+    { name: 'Store Room', area: 200, ratePerSqFt: 700, amount: 140000 },
+  ],
+  machineryItems: [
+    { name: 'Grinding Machine', quantity: 2, rate: 75000, amount: 150000 },
+    { name: 'Packaging Machine', quantity: 1, rate: 120000, amount: 120000 },
+    { name: 'Sealing Machine', quantity: 2, rate: 25000, amount: 50000 },
+    { name: 'Weighing Scale', quantity: 3, rate: 8000, amount: 24000 },
+  ],
+  otherCosts: {
+    preliminaryCost: 50000,
+    furnitureFixtures: 30000,
+    contingency: 36000,
+  },
+  workingCapitalItems: [
+    { element: 'Stock in Process', noOfDays: 90, amount: 240000 },
+    { element: 'Finished Goods', noOfDays: 60, amount: 75000 },
+    { element: 'Receivables', noOfDays: 30, amount: 120000 },
+  ],
+  salesItems: [
+    { productName: 'Processed Grains (5kg pack)', ratePerUnit: 150, quantity: 800, quantityPeriod: 'monthly', amount: 1440000 },
+    { productName: 'Spice Mix (200g pack)', ratePerUnit: 80, quantity: 1500, quantityPeriod: 'monthly', amount: 1440000 },
+  ],
+  rawMaterialItems: [
+    { name: 'Raw Grains', unit: 'Quintal', ratePerUnit: 2500, requiredUnits: 40, amount: 1200000 },
+    { name: 'Spices', unit: 'Kg', ratePerUnit: 400, requiredUnits: 100, amount: 480000 },
+    { name: 'Packaging Material', unit: 'Lot', ratePerUnit: 15000, requiredUnits: 12, amount: 180000 },
+  ],
+  laborItems: [
+    { designation: 'Machine Operator', noOfWorkers: 2, monthlyWage: 12000, totalMonths: 12, annualAmount: 288000 },
+    { designation: 'Helper', noOfWorkers: 3, monthlyWage: 8000, totalMonths: 12, annualAmount: 288000 },
+  ],
+  staffSalaryItems: [
+    { designation: 'Supervisor', noOfStaff: 1, monthlySalary: 15000, totalMonths: 12, annualAmount: 180000 },
+    { designation: 'Accountant', noOfStaff: 1, monthlySalary: 12000, totalMonths: 12, annualAmount: 144000 },
+  ],
+  otherExpenses: {
+    powerRequirement: 60000,
+    repairAndMaintenance: 20000,
+    powerAndFuel: 15000,
+    telephoneExpenses: 12000,
+    stationeryAndPostage: 8000,
+    advertisementAndPublicity: 50000,
+    buildingRent: 96000,          // ₹8,000/month × 12
+    miscellaneousExpenditure: 15000,
+  },
+  financialParams: {
+    interestRate: 0.11,
+    loanTenureYears: 7,
+    implementationMonths: 24,  // Example value — user must provide their own; no default assumed
+    paybackYears: 5,
+    capacityUtilization: [0.70, 0.80, 0.90, 0.90, 0.90],
+  },
+  computed: {},  // Filled by dpr-calculations.ts at runtime
+};
+
+// Usage in dpr-form-view.tsx:
+// <Button onClick={() => useDPRStore.setState(EXAMPLE_DPR_MANUFACTURING)}>
+//   📋 Load Example Data
+// </Button>
+```
+
+> **Placement**: Add a "📋 Load Example" button at the top of the DPR Form view, visible only when the form is empty (no project name entered). Once data is loaded, it disappears to prevent accidental overwrites.
+
+---
+
+## 🧪 TESTING — Unit Tests for Financial Calculations
+
+> **For a financial application that produces loan documents, automated tests are NOT optional.** A wrong subsidy calculation or DSCR value can cause a loan rejection — the most damaging outcome for a PMEGP applicant. Tests must be added during implementation.
+
+### Setup
+
+```bash
+bun add -d vitest
+```
+
+### Test Files Required
+
+```
+src/__tests__/
+├── pmegp-rules.test.ts        # Subsidy rates, own contribution, eligibility, negative list
+├── dpr-calculations.test.ts   # Depreciation, P&L, DSCR, BEP, EMI, balance sheet
+├── validation.test.ts         # All validators (category, cost, subsidy, negative list)
+└── formula-registry.test.ts   # Verify registry delegates correctly to pmegp-rules.ts
+```
+
+### Critical Test Cases
+
+| Module | Test Case | Expected |
+|--------|-----------|----------|
+| `pmegp-rules` | General Male, Urban → subsidy | 15% |
+| `pmegp-rules` | SC Female, Rural → subsidy | 35% |
+| `pmegp-rules` | General Male, Rural → subsidy | 25% |
+| `pmegp-rules` | 2nd loan, NER/Hill → subsidy | 20% |
+| `pmegp-rules` | 2nd loan, General → subsidy | 15% |
+| `pmegp-rules` | General Male → own contribution | 10% |
+| `pmegp-rules` | Special Category → own contribution | 5% |
+| `pmegp-rules` | Women + General category → treated as Special | ✅ |
+| `pmegp-rules` | Land cost → flagged | ✅ Warning |
+| `pmegp-rules` | Dairy → allowed | ✅ |
+| `pmegp-rules` | Liquor store → prohibited | ❌ |
+| `pmegp-rules` | Per capita > ₹4.5L → error | ❌ |
+| `dpr-calculations` | WDV depreciation: Machinery ₹10L, Year 1 | ₹1,50,000 |
+| `dpr-calculations` | WDV depreciation: Machinery ₹10L, Year 2 | ₹1,27,500 (on ₹8.5L WDV) |
+| `dpr-calculations` | SLN depreciation: Building ₹5L, any year | ₹25,000 |
+| `dpr-calculations` | DSCR ≥ 1.5 → good | ✅ |
+| `dpr-calculations` | DSCR < 1.5 → warning | ⚠️ |
+| `formula-registry` | SUBSIDY_RATE.calculate === calculateSubsidyRate | ✅ Same reference |
+| `formula-registry` | No magic numbers in registry | ✅ All delegated |
+
+### Run Command
+
+```bash
+bun run test        # Runs vitest
+bun run test:watch  # Watch mode
+```
+
+Add to `package.json` scripts:
+```json
+{ "test": "vitest run", "test:watch": "vitest" }
+```
+
+---
+
+## 🚨 CRITICAL RULES FOR THE AI AGENT
+
+1. **This is a DESKTOP APP** — not a web app. Think native Windows.
+2. **Custom titlebar** replaces default Windows chrome — must implement minimize/maximize/close
+3. **`output: 'export'`** in next.config.ts means NO server-side features
+4. **All AI calls go through Electron IPC** — NOT fetch() to API routes
+5. **`window.electronAPI`** is the bridge — always check `isElectron` before using
+6. **Excel export** uses ExcelJS in the main process — not in the browser
+7. **File save/load** uses native Windows dialogs — not browser downloads
+8. **App icon** must be `.ico` format for Windows (256x256)
+9. **NSIS installer** creates proper Windows installer (.exe) with Start Menu shortcut
+10. **Test with `bun run dev:electron`** — NOT just `bun run dev`
+11. **Only `/` route** — everything is client-side via Zustand state
+12. **Format all currency** as Indian: `₹12,50,000` (use `Intl.NumberFormat('en-IN')`)
+13. **Persist data** via Zustand `persist` middleware + local file save
+14. **OpenAI SDK** (`openai`) is ONLY used in `electron/ipc-handlers.ts` main process — user must provide their own API key via Settings
+
+---
+
+## 🏛️ ARCHITECTURE LAYERS — Correct Data Flow
+
+> **MANDATORY**: All layers below must be respected. Data flows DOWN only. Export layer must NEVER contain business logic.
+
+```
+UI Layer (React components)
+    ↓ user input
+Zustand Store (dpr-store, ui-store, ai-store)
+    ↓ raw form data
+Validation Engine (src/lib/validation/)
+    ↓ validated data
+PMEGP Rules Engine (src/lib/pmegp-rules.ts)
+    ↓ eligibility + subsidy rules
+Financial Calculation Engine (src/lib/dpr-calculations.ts)
+    ↓ computed financial model
+Report Model (DPRData with computed fields)
+    ↓ structured data only
+Excel Export Engine (electron/excel-export.ts)
+    ↓ reads model, writes file — NO calculations here
+
+AI Layer (parallel)
+    ↓
+Prompt Builder (src/lib/ai/prompt-builder.ts)
+    ↓ structured prompt
+Knowledge Base (pmegp-rules + dpr-types)
+    ↓ context injection
+Conversation Manager (src/lib/ai/conversation-manager.ts)
+    ↓ token-budgeted messages
+
+Electron IPC Layer
+    ↓
+File Services (save/load/export)
+Notification Services
+Export Services (Excel + PDF)
+```
+
+---
+
+## 🛡️ VALIDATION ENGINE — `src/lib/validation/`
+
+> Every DPR form field must be validated BEFORE calculation. The validation engine is a separate layer — it does NOT compute, it only validates and returns issues/warnings.
+
+```
+src/lib/validation/
+├── index.ts                    # Re-exports all validators + runAllValidations()
+├── pmegp-validator.ts          # PMEGP-specific rules (age, category, sector limits)
+├── category-validator.ts       # Gender + category + location cross-checks
+├── project-cost-validator.ts   # Max limits, per capita investment, land cost check
+├── subsidy-validator.ts        # Subsidy rate + Margin Money validation
+├── negative-list-validator.ts  # Activity classification check
+└── dpr-file-validator.ts       # Schema version + data integrity on load
+```
+
+```typescript
+// src/lib/validation/index.ts
+
+export interface ValidationIssue {
+  field: string;           // e.g. 'applicant.age', 'project.totalCost'
+  severity: 'error' | 'warning' | 'info';
+  code: AppErrorCode;      // Links to error taxonomy
+  message: string;         // Human-readable
+  rule: string;            // e.g. 'PMEGP_AGE_MIN', 'PROJECT_COST_MAX'
+}
+
+export interface ValidationResult {
+  isValid: boolean;
+  issues: ValidationIssue[];
+  errors: ValidationIssue[];    // severity === 'error'
+  warnings: ValidationIssue[];  // severity === 'warning'
+}
+
+export function runAllValidations(dprData: Partial<DPRData>): ValidationResult {
+  // ⚠️ IMPORTANT: Callers MUST compute totalProjectCost BEFORE calling this function.
+  // The per-capita investment check (validateProjectCost) requires a valid project cost,
+  // which is derived from: buildingItems + machineryItems + otherCosts + workingCapitalItems.
+  // If projectCost is not yet computed, pass it as dprData.computed.projectCost.
+  //
+  // CORRECT CALLING PATTERN:
+  //   1. Compute totals from raw form data
+  //   2. Run calculations (dpr-calculations.ts)
+  //   3. THEN run validations (this function)
+  //   4. If valid, export
+
+  const issues: ValidationIssue[] = [
+    ...validatePMEGPRules(dprData),
+    ...validateCategory(dprData),
+    ...validateProjectCost(dprData),
+    ...validateSubsidy(dprData),
+    ...validateNegativeList(dprData),
+  ];
+  const errors = issues.filter(i => i.severity === 'error');
+  const warnings = issues.filter(i => i.severity === 'warning');
+  return { isValid: errors.length === 0, issues, errors, warnings };
+}
+```
+
+---
+
+## 🔌 IPC CONTRACT — Formalized
+
+> Every IPC channel has a defined request type, response type, and error taxonomy. No ad hoc calls.
+
+| Channel | Request | Response | Error Codes |
+|---------|---------|----------|-------------|
+| `window:minimize` | `{}` | `void` | `IPC_FAILURE` |
+| `window:maximize` | `{}` | `void` | `IPC_FAILURE` |
+| `window:close` | `{}` | `void` | `IPC_FAILURE` |
+| `window:isMaximized` | `{}` | `boolean` | `IPC_FAILURE` |
+| `file:save-dpr` | `{ data: string }` | `string \| null` (filePath) | `FILE_SAVE_FAILED` |
+| `file:load-dpr` | `{}` | `string \| null` (JSON) | `FILE_LOAD_FAILED` |
+| `file:export-excel` | `{ data: string }` | `string \| null` (filePath) | `EXPORT_FAILED` |
+| `file:export-pdf` | `{ html: string }` | `string \| null` (filePath) | `EXPORT_FAILED` |
+| `notification:show` | `{ title, body }` | `void` | `IPC_FAILURE` |
+| `app:version` | `{}` | `string` | `IPC_FAILURE` |
+| `app:platform` | `{}` | `string` | `IPC_FAILURE` |
+| `dialog:select-folder` | `{}` | `string \| null` | `IPC_FAILURE` |
+| `ai:chat` | `{ messages, dprData, config: { apiKey?, baseURL?, model? } }` | `{ success, response }` | `AI_FAILURE` |
+| `ai:test` | `{ config: { apiKey?, baseURL?, model? } }` | `{ success, message, latencyMs }` | `AI_FAILURE` |
+| `ai:suggest` | `{ fieldName, context, projectType }` | `{ success, suggestion }` | `AI_FAILURE` |
+
+---
+
+## ❌ ERROR TAXONOMY — `src/lib/errors.ts`
+
+> Every error in the application uses a typed error code. No untyped string messages.
+
+```typescript
+// src/lib/errors.ts
+
+export enum AppErrorCode {
+  // Validation errors (4xxx)
+  VALIDATION_ERROR = 4000,
+  VALIDATION_AGE_MIN = 4001,
+  VALIDATION_PROJECT_COST_MAX = 4002,
+  VALIDATION_NEGATIVE_LIST = 4003,
+  VALIDATION_CATEGORY_MISMATCH = 4004,
+  VALIDATION_LAND_COST = 4005,
+  VALIDATION_PER_CAPITA = 4006,
+
+  // File errors (5xxx)
+  FILE_SAVE_FAILED = 5000,
+  FILE_LOAD_FAILED = 5001,
+  FILE_NOT_FOUND = 5002,
+  FILE_SCHEMA_MISMATCH = 5003,
+
+  // Export errors (6xxx)
+  EXPORT_FAILED = 6000,
+  EXPORT_EXCEL_FAILED = 6001,
+  EXPORT_PDF_FAILED = 6002,
+
+  // IPC errors (7xxx)
+  IPC_FAILURE = 7000,
+  IPC_TIMEOUT = 7001,
+  IPC_NOT_AVAILABLE = 7002,
+
+  // AI errors (8xxx)
+  AI_FAILURE = 8000,
+  AI_CONNECTION_FAILED = 8001,
+  AI_RATE_LIMITED = 8002,
+  AI_CONTEXT_TOO_LONG = 8003,
+
+  // Calculation errors (9xxx)
+  CALCULATION_FAILURE = 9000,
+  CALCULATION_SUBSIDY = 9001,
+  CALCULATION_DSCR = 9002,
+  CALCULATION_DEPRECIATION = 9003,
+}
+
+export class AppError extends Error {
+  constructor(
+    public code: AppErrorCode,
+    message: string,
+    public details?: Record<string, unknown>
+  ) {
+    super(message);
+    this.name = 'AppError';
+  }
+}
+```
+
+---
+
+## 🧮 FINANCIAL CALCULATION ENGINE — `src/lib/dpr-calculations.ts`
+
+> **CRITICAL**: This is the ONLY place financial calculations happen. The Excel export layer consumes computed outputs — it does NOT calculate.
+
+```typescript
+// src/lib/dpr-calculations.ts
+// ALL financial calculations live here. Export layer reads computed outputs only.
+
+export function calculateMeansOfFinance(projectCost: number, gender: number, category: number): {
+  ownContributionPct: number; ownContributionAmt: number;
+  bankLoanAmt: number; subsidyAmt: number; netLiabilityAfterLockIn: number;
+} { /* uses pmegp-rules.ts */ }
+
+export function calculateDepreciation(buildingCost: number, machineryCost: number, furnitureCost: number, years: number = 5): {
+  building: number[];   // SLN 5%
+  machinery: number[];  // WDV 15%
+  furniture: number[];  // WDV 10%
+  machineryWDV: number[];
+  furnitureWDV: number[];
+} { /* WDV reducing balance loop */ }
+
+export function calculateProfitLoss(params: ProfitLossParams): ProfitLossStatement[] { /* 5-year P&L */ }
+
+export function calculateLoanSchedule(principal: number, rate: number, tenureYears: number): LoanRepaymentSchedule[] { /* quarterly */ }
+
+export function calculateDSCR(netProfit: number, depreciation: number, loanPrincipal: number, interestRate: number): number { /* >= 1.5 */ }
+
+export function calculateBreakEven(fixedCosts: number, sales: number, variableCosts: number): number { /* BEP % */ }
+
+export function calculateBalanceSheet(params: BalanceSheetParams): BalanceSheet[] { /* 5-year */ }
+
+export function calculateCashFlow(params: CashFlowParams): CashFlowItem[] { /* 5-year */ }
+
+export function calculateEMI(principal: number, annualRate: number, months: number): number { /* PMT formula */ }
+```
+
+---
+
+## 📐 FORMULA GOVERNANCE — `src/lib/formula-registry.ts`
+
+> Single source of truth for ALL PMEGP formula metadata. **This file does NOT duplicate calculation logic** — it DELEGATES to `pmegp-rules.ts` and `dpr-calculations.ts` for actual computation. It provides metadata (source references, thresholds, units) so that UI components and export code can look up formula properties without importing the calculation functions directly.
+
+```typescript
+// src/lib/formula-registry.ts
+// Formula metadata registry — delegates ALL calculations to pmegp-rules.ts and dpr-calculations.ts
+// NEVER duplicate formula logic here. Import the actual functions and wrap them.
+
+import {
+  calculateSubsidyRate,
+  calculateOwnContributionRate,
+  SECOND_LOAN_SUBSIDY,
+  CAPACITY_UTILIZATION,
+  DEPRECIATION,
+  MAX_PROJECT_COST,
+} from './pmegp-rules';
+import {
+  calculateDSCR,
+  calculateBreakEven,
+  calculateEMI,
+  calculateDepreciation,
+} from './dpr-calculations';
+
+export const FORMULAS = {
+  SUBSIDY_RATE: {
+    id: 'SUBSIDY_RATE',
+    name: 'PMEGP Subsidy Rate',
+    source: 'KVIC DPRPACKAGE.xls Cell G87',
+    calculate: calculateSubsidyRate,  // ⭐ Delegates to pmegp-rules.ts — single source of truth
+    description: 'Subsidy % based on Gender + Category + Location (15%/25%/35%)',
+  },
+  OWN_CONTRIBUTION: {
+    id: 'OWN_CONTRIBUTION',
+    name: 'Own Contribution Rate',
+    source: 'KVIC DPRPACKAGE.xls Cell G85',
+    calculate: calculateOwnContributionRate,  // ⭐ Delegates to pmegp-rules.ts
+    description: 'Own contribution % (5% Special / 10% General Male)',
+  },
+  SECOND_LOAN_SUBSIDY: {
+    id: 'SECOND_LOAN_SUBSIDY',
+    name: '2nd Loan Subsidy Rate',
+    source: 'PMEGP Revised Guidelines Dec 2023',
+    calculate: (isNERHill: boolean) => isNERHill ? SECOND_LOAN_SUBSIDY.NER_HILL : SECOND_LOAN_SUBSIDY.GENERAL,  // ⭐ Delegates to pmegp-rules.ts constant
+    description: '2nd loan: 15% general, 20% NER/Hill states',
+  },
+  DSCR: {
+    id: 'DSCR',
+    name: 'Debt Service Coverage Ratio',
+    source: 'Standard banking formula',
+    calculate: calculateDSCR,  // ⭐ Delegates to dpr-calculations.ts
+    threshold: 1.5,
+    description: 'Net Cash Accrual / Total Debt Service — must be ≥ 1.5',
+  },
+  BREAK_EVEN: {
+    id: 'BREAK_EVEN',
+    name: 'Break-Even Point',
+    source: 'Standard financial formula',
+    calculate: calculateBreakEven,  // ⭐ Delegates to dpr-calculations.ts
+    description: 'Fixed Costs / (Sales - Variable Costs) × 100',
+  },
+  DEPRECIATION_SLN: {
+    id: 'DEPRECIATION_SLN',
+    name: 'Straight Line Depreciation',
+    source: 'Income Tax Act',
+    rate: DEPRECIATION.BUILDING.rate,  // ⭐ Reads from pmegp-rules.ts constant
+    calculate: (cost: number) => cost * DEPRECIATION.BUILDING.rate,  // Delegates
+    note: 'Used for Building (5%)',
+  },
+  DEPRECIATION_WDV: {
+    id: 'DEPRECIATION_WDV',
+    name: 'Written Down Value Depreciation',
+    source: 'Income Tax Act',
+    rates: { machinery: DEPRECIATION.MACHINERY.rate, furniture: DEPRECIATION.FURNITURE.rate },  // ⭐ Reads from pmegp-rules.ts
+    calculate: calculateDepreciation,  // ⭐ Delegates to dpr-calculations.ts (handles WDV loop)
+    note: 'Used for Machinery (15%) and Furniture (10%) — reducing balance',
+  },
+  EMI: {
+    id: 'EMI',
+    name: 'Equated Monthly Installment',
+    source: 'PMT formula',
+    calculate: calculateEMI,  // ⭐ Delegates to dpr-calculations.ts
+    description: 'PMT(rate/12, months, principal)',
+  },
+  CAPACITY_UTILIZATION: {
+    id: 'CAPACITY_UTILIZATION',
+    name: 'Capacity Utilization (5-Year)',
+    source: 'KVIC DPR template default',
+    rates: CAPACITY_UTILIZATION,  // ⭐ Reads from pmegp-rules.ts constant
+  },
+} as const;
+
+// ⚠️ CRITICAL RULE: If you add a formula here, it MUST delegate to pmegp-rules.ts or dpr-calculations.ts.
+// NEVER write raw calculation logic in this file. This is a METADATA registry only.
+```
+
+---
+
+## 🤖 AI ASSISTANT ARCHITECTURE — `src/lib/ai/`
+
+> The AI layer is structured for production use: prompt versioning, conversation management, token budgets, error recovery, and context compression.
+
+```
+src/lib/ai/
+├── prompt-builder.ts          # Builds system prompt from DPR data + PMEGP knowledge
+├── conversation-manager.ts    # Manages conversation history, token counting, context truncation
+├── context-compressor.ts      # Compresses long DPR data into concise context for AI
+├── ai-error-handler.ts        # Retry logic, rate limiting, failure recovery
+└── token-budget.ts            # Token budget rules (max context, max response, truncation thresholds)
+```
+
+```typescript
+// src/lib/ai/prompt-builder.ts
+// Version-controlled system prompt construction
+
+export const PROMPT_VERSION = 1;
+
+export function buildSystemPrompt(dprData: Partial<DPRData>): string {
+  // Combines PMEGP knowledge base + current DPR form data into structured prompt
+  // Uses token-budget to stay within limits
+  // Returns version-tagged prompt for audit logging
+}
+
+// src/lib/ai/conversation-manager.ts
+export class ConversationManager {
+  private messages: ChatMessage[] = [];
+  private maxTokens: number;
+  private tokenBudget: TokenBudget;
+
+  addMessage(role: string, content: string): void;
+  getMessages(): ChatMessage[];              // Returns token-budgeted message list
+  truncateToBudget(): void;                  // Removes oldest messages if over budget
+  exportConversation(): string;              // For persistence
+  importConversation(json: string): void;    // Restore from save
+}
+
+// src/lib/ai/ai-error-handler.ts
+export class AIErrorHandler {
+  static readonly MAX_RETRIES = 3;
+  static readonly RETRY_DELAY_MS = 1000;
+
+  static async withRetry<T>(fn: () => Promise<T>): Promise<T>;  // Exponential backoff
+  static isRateLimited(error: unknown): boolean;
+  static isContextTooLong(error: unknown): boolean;
+  static handleFailure(error: unknown): AppError;               // Maps to AppErrorCode
+}
+
+// src/lib/ai/token-budget.ts
+export const TOKEN_BUDGET = {
+  MAX_CONTEXT_TOKENS: 8000,       // Total context window
+  SYSTEM_PROMPT_BUDGET: 3000,     // Max tokens for system prompt
+  CONVERSATION_BUDGET: 4000,      // Max tokens for conversation history
+  RESPONSE_BUDGET: 1000,          // Max tokens for AI response
+  DPR_DATA_COMPRESSED: 1500,      // Max tokens for compressed DPR data
+  TRUNCATION_THRESHOLD: 0.9,      // Truncate at 90% of budget
+} as const;
+```
+
+---
+
+## 📝 AUDIT LOGGING — `electron/audit-logger.ts`
+
+> Financial software must record all significant actions for accountability. Audit logs are stored locally in `appData/logs/audit.log`.
+
+```typescript
+// electron/audit-logger.ts
+import { app } from 'electron';
+import * as fs from 'fs';
+import * as path from 'path';
+
+export enum AuditEvent {
+  DPR_CREATED = 'DPR_CREATED',
+  DPR_UPDATED = 'DPR_UPDATED',
+  DPR_SAVED = 'DPR_SAVED',
+  DPR_LOADED = 'DPR_LOADED',
+  DPR_EXPORTED_EXCEL = 'DPR_EXPORTED_EXCEL',
+  DPR_EXPORTED_PDF = 'DPR_EXPORTED_PDF',
+  AI_USED = 'AI_USED',
+  SUBSIDY_CALCULATED = 'SUBSIDY_CALCULATED',
+  VALIDATION_RUN = 'VALIDATION_RUN',
+  SETTINGS_CHANGED = 'SETTINGS_CHANGED',
+}
+
+interface AuditLogEntry {
+  timestamp: string;        // ISO 8601
+  event: AuditEvent;
+  details: Record<string, unknown>;
+  userId?: string;          // Future: multi-user support
+}
+
+const LOG_DIR = path.join(app.getPath('userData'), 'logs');
+const LOG_FILE = path.join(LOG_DIR, 'audit.log');
+
+export function logAudit(event: AuditEvent, details: Record<string, unknown> = {}): void {
+  if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true });
+  const entry: AuditLogEntry = { timestamp: new Date().toISOString(), event, details };
+  fs.appendFileSync(LOG_FILE, JSON.stringify(entry) + '\n', 'utf-8');
+}
+```
+
+Usage in IPC handlers:
+```typescript
+ipcMain.handle('file:save-dpr', async (e, data: string) => {
+  // ... save logic ...
+  logAudit(AuditEvent.DPR_SAVED, { filePath });
+  return filePath;
+});
+
+ipcMain.handle('file:export-excel', async (e, data: string) => {
+  // ... export logic ...
+  logAudit(AuditEvent.DPR_EXPORTED_EXCEL, { filePath });
+  return filePath;
+});
+```
+
+---
+
+## 🎯 FINAL DELIVERABLES
+
+After the complete build, the agent should produce:
+
+1. **`DPR-Guide-Pro-Setup-1.0.0.exe`** (~80-120MB) — Windows installer
+   - NSIS installer with custom banners
+   - Desktop shortcut
+   - Start Menu shortcut
+   - Uninstaller
+
+2. **Source code** — Complete project with all files listed above
+
+### User Experience:
+1. Download `DPR-Guide-Pro-Setup-1.0.0.exe`
+2. Double-click to install
+3. Desktop shortcut appears
+4. Launch app → beautiful Windows 11-style window opens
+5. Fill DPR form with AI assistance
+6. Save/Load DPR data as .json files
+7. Export complete DPR as .xlsx Excel file
+8. Minimize to system tray
+9. Get Windows notifications
+10. Single fixed release — no auto-update (one-time distribution)
