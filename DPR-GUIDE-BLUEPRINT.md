@@ -22,7 +22,7 @@ Desktop-only Windows application.
 | **Runtime** | Electron |
 | **UI Framework** | Next.js 16, pinned to a stable release after dependency verification |
 | **Language** | TypeScript |
-| **Styling** | Tailwind CSS 4 + shadcn/ui, pinned to stable versions after dependency verification, pinned to stable versions after dependency verification |
+| **Styling** | Tailwind CSS 4 + shadcn/ui, pinned to stable versions after dependency verification |
 | **State** | Zustand |
 | **Excel Export** | ExcelJS or workbook template engine, depending on verified `.xls` support |
 | **AI SDK** | OpenAI SDK (Electron main process only — user provides API key) |
@@ -151,6 +151,8 @@ Policy:
 - Preserve valid `DPRPACKAGE.xls` formulas for export fidelity.
 - Use `G85`, `G86`, and `G87` as the audited canonical workbook formulas for own contribution, bank finance, and subsidy rate.
 - Do **not** use `L25`, `R57`, `R58`, `R59`, or `R60` as subsidy authority.
+- Treat `DataSheet!M36` as a known broken lookup; compute the sponsoring agency display name from `M59` in app logic.
+- Treat `DataSheet!M56` as non-canonical/empty; only `M55` is the active gender input.
 - Use audited canonical formulas for known broken or ambiguous workbook formulas.
 - Document every deviation from the workbook formula.
 - Add tests for workbook load success, no unresolved `#REF!` in exported files, G87-equivalent subsidy logic, project-cost-limit handling, second-loan subsidy caps, and R59/R60 discrepancy handling.
@@ -847,6 +849,8 @@ The app must not claim that any bank offers the “best” PMEGP rate. Interest-
 | 2 | Female |
 | 3 | Transgender |
 
+> **M56 note:** `DataSheet!M56` is empty in the audited workbook. The adjacent lookup text `L56="Female"` suggests it may have been intended for a secondary gender/social-category display field, but no canonical output formula uses it. Treat only `M55` as the active gender input.
+
 #### 19.3 Location Codes (M64)
 
 | Code | Location |
@@ -892,7 +896,7 @@ The app must not claim that any bank offers the “best” PMEGP rate. Interest-
 
 ---
 
-### 20. Excel #REF! Errors (9 broken formulas to handle)
+### 20. Excel Formula Errors (10 broken formulas: 9 × #REF! + 1 × #VALUE!)
 
 
 | Sheet | Cell | Issue | App Fix |
@@ -910,7 +914,53 @@ The app must not claim that any bank offers the “best” PMEGP rate. Interest-
 
 The app MUST provide direct input fields for these broken-reference values. The audit can infer probable meanings from surrounding labels, but the original source cell references are permanently lost for `#REF!` cells.
 
-`DPR_print!F333:I333`, `F386:I386`, `F388:I388`, `F390:I390`, `F392:I392`, and `F394:I394` produce `#DIV/0!` with empty template data. These are structurally valid formulas for DSCR, BEP, break-even sales/units, current ratio, and net profit ratio, but the app/export must handle division-by-zero gracefully.
+Additional `#REF!` source note:
+- `Project_Report!G14` → Father's/Spouse's Name, inferred from label at `B14`.
+- `Project_Report!J20` → State, inferred from label at `I20`.
+- `Project_Report!H21` → Phone, inferred from label at `G21`.
+- `Project_Report!H22` → Email, inferred from label at `G22`.
+- `DPR_FRONT!B33` → Preparing officer/office name, inferred from position below `Prepared By:`.
+- `DPR_FRONT!B35:B36` → Agency address lines, inferred from agency block position.
+- `DPR_FRONT!B37` → Agency city/district, inferred from merged block position.
+- `DPR_FRONT!F37` → Agency state, inferred from explicit `State:` label.
+
+Known non-`#REF!` issue: `DataSheet!M36` contains `=L59:L62`, which produces `#VALUE!`. It was likely intended as an agency-name lookup such as `=INDEX(L59:L62,M59)`, but the app should compute the selected agency directly from `M59` instead of relying on this broken formula.
+
+`DPR_print!F333:I333`, `F386:I386`, `F388:I388`, `F390:I390`, `F392:I392`, and `F394:I394` produce `#DIV/0!` with empty template data. These formulas for DSCR, BEP%, break-even sales/units, current ratio, and net profit ratio are structurally valid; the error is caused by zero/blank input values. The app/export should handle division-by-zero gracefully by displaying `0`, `N/A`, or `—` as appropriate.
+
+---
+
+### 20.1 Workbook Formula Dependency Graph — Export Safety Rules
+
+
+The dependency-graph audit confirms that the template is a rigid, cell-coordinate-driven workbook. Most output formulas link directly to fixed `DataSheet` cells/ranges. This makes the workbook useful as an export template, but fragile if its structure is changed.
+
+Key dependencies to preserve:
+
+| Dependency | Destination / Use | App Policy |
+|------------|-------------------|------------|
+| `DataSheet!G85` | Own contribution amount; flows to `DPR_print!F123` | ✅ Canonical; preserve formula |
+| `DataSheet!G86` | Bank finance amount; flows to `DPR_print!F125` | ✅ Canonical; preserve formula |
+| `DataSheet!G87` | Subsidy margin money; flows to `DPR_print!F131` | ✅ Canonical; preserve formula |
+| `DataSheet!M59` | Sponsoring agency code; flows to `DPR_FRONT!B34` and related agency display logic | ✅ Verified selector; compute display name in app where formula is broken |
+| `DataSheet!M80` | Project type/sector code; flows to `DPR_print!H131` and `J131` | ✅ Verified selector |
+| `DataSheet!M91` | Building ownership code; flows to `Application_form!B59` | ✅ Verified selector |
+| `DataSheet!B41:E41` | Building block dragged through `DPR_print!B86` row range | ✅ Fill existing rows only; do not insert/delete rows |
+| `DataSheet!B54:E54` | Machinery block dragged through `DPR_print!B96` row range | ✅ Fill existing rows only; do not insert/delete rows |
+| `DataSheet!B121:D121` | Labor/wages block; flows to `DPR_print!B215` and `Project_Report!B57` | ✅ Fill existing rows only; do not insert/delete rows |
+
+Export safety rules:
+
+- The app must **never insert or delete rows/columns** in the official workbook template during export.
+- The app must **only overwrite values in existing cells/ranges**.
+- If the user enters more line items than the template has visible rows, the app should unhide and fill existing hidden template rows, not append rows.
+- The app should keep a workbook row-cap policy for each line-item block, for example:
+  - building rows: existing template capacity only
+  - machinery rows: existing template capacity only
+  - sales/revenue rows: existing template capacity only
+  - employment rows: existing template capacity only
+- If user data exceeds template capacity, the app should warn the user and either truncate with disclosure or require manual template expansion before export.
+- Any future template expansion must be performed on a separate template-copy audit branch, followed by formula dependency verification before shipping.
 
 ---
 
@@ -928,7 +978,7 @@ The following subsidy-cell notes are based on the deeper workbook audit. `G87` i
 =IF(DataSheet!M59=4,IF(AND(DataSheet!M56=1,DataSheet!M70=8),15%,25%),IF(AND(DataSheet!M56=1,DataSheet!M70=8),25%,35%))
 ```
 
-It references `M59=4` (COIR Board branch), but it uses `M56`, which is empty, and `M70=8` (Aspirational Districts) instead of `M55`/Gender and `M70=9`/General. It is not consumed by output formulas. Therefore, the app must use `G87` exclusively for subsidy rate calculation.
+It references `M59=4` (COIR Board branch), but it uses `M56`, which is empty, and `M70=8` (Aspirational Districts) instead of `M55`/Gender and `M70=9`/General. It is not consumed by output formulas. Therefore, `L25` is a parallel/draft subsidy calculation, not the subsidy authority. The app must use `G87` exclusively for subsidy rate calculation.
 
 `G87` formula:
 
@@ -944,9 +994,9 @@ These cells are verified helper/reference formulas, not primary calculation auth
 | Cell | Verified Formula | Meaning | App Policy |
 |------|---------|---------|------------|
 | R57 | `=IF(M64=2,IF(AND(M55=1,M70=9),15,25),IF(AND(M55=1,M70=9),25,35))` | Whole-number duplicate of G87 | ❌ Do not use; non-canonical helper |
-| R58 | `=IF(AND(M55=1,M70=9,M64=2),15,25)` | Partial urban check | ❌ Do not use; incomplete helper |
-| R59 | `=IF(AND(M55=1,M64=1,M70=9),35,25)` | ❌ Confirmed conflict: Rural Male General returns 35 while G87 returns 25 | ❌ Do not use; G87 is canonical |
-| R60 | `=IF(AND(M57=1,M72=9,M66=2),15,0)` | ❌ Broken/dead: M57/M72/M66 are not active input cells | ❌ Do not use; broken helper |
+| R58 | `=IF(AND(M55=1,M70=9,M64=2),15,25)` | Partial urban check only | ❌ Do not use; incomplete helper |
+| R59 | `=IF(AND(M55=1,M64=1,M70=9),35,25)` | ❌ Confirmed conflict: Rural Male General returns 35 while canonical G87 returns 25 | ❌ Do not use; G87 is canonical |
+| R60 | `=IF(AND(M57=1,M72=9,M66=2),15,0)` | ❌ Broken/dead: M57=`Transgender` text, M72=`OBC` text, M66 is empty, so conditions always fail and result is 0 | ❌ Do not use; broken helper |
 
 ---
 
@@ -1076,7 +1126,8 @@ src/components/views/
 │   │   │   ├── rejection-checker-view.tsx    # NEW — 10-point rejection risk checker
 │   │   │   ├── application-guide-view.tsx    # NEW — implementation-relevant workflow guide
 │   │   │   ├── subsidy-calculator-view.tsx   # NEW — live subsidy calculator
-│   │   │   └── edp-training-view.tsx         # NEW — EDP training finder
+│   │   │   ├── edp-training-view.tsx         # NEW — EDP training finder
+│   │   │   └── ai-interview-view.tsx         # NEW — guided AI interview and autofill review
 │   │   ├── form-sections/
 │   │   │   ├── applicant-info.tsx
 │   │   │   ├── project-details.tsx
@@ -1184,9 +1235,7 @@ Add these scripts and build configuration. Use `npm` consistently, or replace it
     "build": "next build && npm run build:electron && electron-builder",
     "build:win": "next build && npm run build:electron && electron-builder --win",
     "lint": "next lint"
-  },
-  // NOTE: Build configuration is in electron-builder.yml (do NOT duplicate here)
-  // electron-builder.yml takes precedence, and having both causes confusion
+  }
 }
 ```
 
@@ -1277,6 +1326,7 @@ import { createTray } from './tray';
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
+let isQuitting = false;
 
 const isDev = !app.isPackaged;
 
@@ -1337,21 +1387,10 @@ function createWindow() {
   });
 }
 
-let isQuitting = false;
-
 app.whenReady().then(() => {
   createWindow();
   setupIPCHandlers();
   tray = createTray(mainWindow!);
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    } else {
-      mainWindow?.show();
-    }
-  });
-});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -1413,9 +1452,9 @@ export interface ElectronAPI {
   exportExcel: (data: string) => Promise<string | null>;
   exportPDF: (html: string) => Promise<string | null>;
   showNotification: (title: string, body: string) => Promise<void>;
-  getVersion: () => Promise<string>;
-  getPlatform: () => string;
-  selectFolder: () => Promise<string | null>;
+  aiChat: (messages: any[], dprData: any, config?: any) => Promise<{ success: boolean; response?: string; error?: string }>;
+  aiTest: (config?: any) => Promise<{ success: boolean; message?: string; latencyMs?: number; error?: string }>;
+  aiSuggest: (fieldName: string, context: string, projectType: string, config?: any) => Promise<{ success: boolean; suggestion?: string; error?: string }>;
 }
 
 declare global {
@@ -1484,10 +1523,9 @@ import { exportDPRToExcel } from './excel-export';  // ⭐ Single authoritative 
 
   // ── Export DPR as Excel (.xlsx) ──
   // ⭐ DELEGATES to excel-export.ts — NO inline calculation or workbook construction here.
-  // All Excel generation lorenderer owns schema migration) ──
-  // Main process only reads the file and returns raw JSON. The renderer imports
-  // migrateDPRData from src/lib/dpr-types.ts and applies it after receiving data.xport.ts (the single authoritative export engine).
+  // Main process parses the renderer's JSON and delegates template-fill export.
   ipcMain.handle('file:export-excel', async (e, data: string) => {
+    const parsedData = JSON.parse(data);
     const { canceled, filePath } = await dialog.showSaveDialog(
       BrowserWindow.fromWebContents(e.sender)!,
       {
@@ -1497,7 +1535,15 @@ import { exportDPRToExcel } from './excel-export';  // ⭐ Single authoritative 
       }
     );
     if (!canceled && filePath) {
-      return fs.readFileSync(filePaths[0], 'utf-8'ialog.showSaveDialog(
+      await exportDPRToExcel(parsedData, filePath);
+      return filePath;
+    }
+    return null;
+  });
+
+  // ── Export DPR as PDF (.pdf) ──
+  ipcMain.handle('file:export-pdf', async (e, html: string) => {
+    const { canceled, filePath } = await dialog.showSaveDialog(
       BrowserWindow.fromWebContents(e.sender)!,
       {
         title: 'Export DPR as PDF',
@@ -1703,12 +1749,12 @@ ipcMain.handle('ai:test', async (e, config) => {
 });
 
 // ── AI Field Suggestion ──
-ipcMain.handle('ai:suggest', async (e, { fieldName, context, projectType }) => {
+ipcMain.handle('ai:suggest', async (e, { fieldName, context, projectType, config }) => {
   try {
-    const openai = createOpenAIClient();
+    const openai = createOpenAIClient(config);
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: config?.model || 'gpt-4o',
       messages: [
         {
           role: 'system' as const,
@@ -1738,8 +1784,8 @@ ipcMain.handle('ai:suggest', async (e, { fieldName, context, projectType }) => {
   aiChat: (messages: any[], dprData: any, config?: any) =>
     ipcRenderer.invoke('ai:chat', { messages, dprData, config }),
   aiTest: (config?: any) => ipcRenderer.invoke('ai:test', config),
-  aiSuggest: (fieldName: string, context: string, projectType: string) =>
-    ipcRenderer.invoke('ai:suggest', { fieldName, context, projectType }),
+  aiSuggest: (fieldName: string, context: string, projectType: string, config?: any) =>
+    ipcRenderer.invoke('ai:suggest', { fieldName, context, projectType, config }),
 ```
 
 #### 9.7c Create `src/hooks/use-electron.ts` — React Hook for Electron
@@ -3466,185 +3512,168 @@ Simplified Excel export may still be useful for non-official analysis exports, b
 ```typescript
 // electron/excel-export.ts
 import ExcelJS from 'exceljs';
+import * as path from 'path';
 
-export async function exportDPRToExcel(dprData: any, filePath: string): Promise<void> {
+export interface ExcelExportOptions {
+  templatePath?: string;
+}
+
+type CodeLookup = Record<string, number>;
+
+function toCode(value: string | number | undefined, lookup: CodeLookup): number | undefined {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') return lookup[value.trim().toLowerCase()];
+  return undefined;
+}
+
+function setCell(sheet: ExcelJS.Worksheet, cellAddress: string, value: unknown): void {
+  const cell = sheet.getCell(cellAddress);
+  if (value === undefined || value === null || value === '') {
+    cell.value = null;
+    return;
+  }
+  cell.value = value;
+}
+
+export async function exportDPRToExcel(
+  dprData: any,
+  filePath: string,
+  options: ExcelExportOptions = {},
+): Promise<void> {
+  const templatePath =
+    options.templatePath ||
+    path.join(process.resourcesPath, 'templates', 'DPRPACKAGE.xlsx');
+
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'PMEGP DPR Generator';
   workbook.created = new Date();
 
-  // ── Sheet 1: DataSheet ──
-  const dataSheet = workbook.addWorksheet('DataSheet');
-  dataSheet.addRow(['DATA INPUT SHEET']);
-  dataSheet.addRow([]);
-  dataSheet.addRow(['Preference for sponsoring agency', dprData.project?.sponsoringAgency]);
-  dataSheet.addRow(['1.1', 'Name of the Applicant/Institution', dprData.applicant?.name]);
-  dataSheet.addRow(['2', 'Gender', dprData.applicant?.gender]);
-  dataSheet.addRow(['3', 'Address', dprData.applicant?.address]);
-  dataSheet.addRow(['', 'Taluk/Block', dprData.applicant?.taluk]);
-  dataSheet.addRow(['', 'District', dprData.applicant?.district]);
-  dataSheet.addRow(['', 'Pin', dprData.applicant?.pin]);
-  dataSheet.addRow(['', 'State', dprData.applicant?.state]);
-  dataSheet.addRow(['4', 'Qualification', dprData.applicant?.qualification]);
-  dataSheet.addRow(['5', 'Category', dprData.applicant?.category]);
+  // ⭐ Template-fill export: preserve the audited workbook layout/formulas.
+  // If the shipped source is .xls, convert it to .xlsx first with LibreOffice
+  // and ship the verified .xlsx as the template.
+  await workbook.xlsx.readFile(templatePath);
 
-  // Building Details
-  dataSheet.addRow([]);
-  dataSheet.addRow(['BUILDING DETAILS']);
-  dataSheet.addRow(['Particulars', 'Area', 'Rate/Sq.ft', 'Amount in Rs.']);
+  // Ask Excel/LibreOffice to recalculate formulas when the exported file is opened.
+  workbook.calculation = {
+    fullCalcOnLoad: true,
+    forceFullCalc: true,
+  };
+
+  const dataSheet = workbook.getWorksheet('DataSheet');
+  const projectReport = workbook.getWorksheet('Project_Report');
+  const dprFront = workbook.getWorksheet('DPR_FRONT');
+  const dprPrint = workbook.getWorksheet('DPR_print');
+
+  if (!dataSheet) throw new Error('Template sheet not found: DataSheet');
+  if (!projectReport) throw new Error('Template sheet not found: Project_Report');
+  if (!dprFront) throw new Error('Template sheet not found: DPR_FRONT');
+  if (!dprPrint) throw new Error('Template sheet not found: DPR_print');
+
+  const genderCodes: CodeLookup = { male: 1, female: 2, transgender: 3 };
+  const agencyCodes: CodeLookup = { kvic: 1, kvib: 2, dic: 3, coir: 4, 'coir board': 4 };
+  const locationCodes: CodeLookup = { rural: 1, urban: 2 };
+  const categoryCodes: CodeLookup = {
+    sc: 1,
+    st: 2,
+    obc: 3,
+    phc: 4,
+    exserviceman: 5,
+    'ex-serviceman': 5,
+    minority: 6,
+    'hill border area': 7,
+    'aspirational districts': 8,
+    aspirational: 8,
+    general: 9,
+  };
+  const sectorCodes: CodeLookup = { manufacturing: 1, service: 2, business: 2 };
+
+  // ── Canonical selector inputs ──
+  setCell(dataSheet, 'M55', toCode(dprData.applicant?.gender, genderCodes));
+  setCell(dataSheet, 'M59', toCode(dprData.project?.sponsoringAgency, agencyCodes));
+  setCell(dataSheet, 'M64', toCode(dprData.project?.location, locationCodes));
+  setCell(dataSheet, 'M70', toCode(dprData.applicant?.category, categoryCodes));
+  setCell(dataSheet, 'M80', toCode(dprData.project?.sector, sectorCodes));
+
+  // ⚠️ M56 is intentionally NOT used. Workbook audit found it empty/non-canonical.
+
+  // ── Applicant/project fields ──
+  setCell(dataSheet, 'B8', dprData.applicant?.name);
+  setCell(dataSheet, 'B14', dprData.applicant?.addressLine1);
+  setCell(dataSheet, 'B15', dprData.applicant?.addressLine2);
+  setCell(dataSheet, 'D16', dprData.applicant?.talukBlock);
+  setCell(dataSheet, 'H17', dprData.applicant?.pin);
+  setCell(dataSheet, 'B18', dprData.applicant?.state);
+  setCell(dataSheet, 'B19', dprData.applicant?.email);
+  setCell(dataSheet, 'F19', dprData.applicant?.mobile);
+  setCell(dataSheet, 'B31', dprData.project?.projectName);
+  setCell(dataSheet, 'B34', dprData.project?.legalStatus);
+  setCell(dataSheet, 'E22', dprData.applicant?.technicalQualification);
+
+  // ── #REF! recovery fields: original source refs are lost, so fill direct UI fields ──
+  setCell(projectReport, 'G14', dprData.applicant?.fatherSpouseName);
+  setCell(projectReport, 'J20', dprData.applicant?.state);
+  setCell(projectReport, 'H21', dprData.applicant?.phone);
+  setCell(projectReport, 'H22', dprData.applicant?.email);
+  setCell(dprFront, 'B33', dprData.office?.preparedByName);
+  setCell(dprFront, 'B35', dprData.office?.addressLine1);
+  setCell(dprFront, 'B36', dprData.office?.addressLine2);
+  setCell(dprFront, 'B37', dprData.office?.cityDistrict);
+  setCell(dprFront, 'F37', dprData.office?.state);
+
+  // ── Building rows ──
+  const buildingStartRow = 41;
   const buildingItems = dprData.buildingItems || [];
-  let totalBuilding = 0;
-  for (const b of buildingItems) {
-    if (b.name) { dataSheet.addRow([b.name, b.area, b.ratePerSqFt, b.amount]); totalBuilding += b.amount || 0; }
+  for (let i = 0; i < 7; i += 1) {
+    const item = buildingItems[i] || {};
+    const row = buildingStartRow + i;
+    setCell(dataSheet, `B${row}`, item.name);
+    setCell(dataSheet, `F${row}`, item.area);
+    setCell(dataSheet, `G${row}`, item.ratePerSqFt);
+    setCell(dataSheet, `H${row}`, item.amount);
   }
-  dataSheet.addRow(['Total', '', '', totalBuilding]);
 
-  // Machinery Details
-  dataSheet.addRow([]);
-  dataSheet.addRow(['MACHINERY DETAILS']);
-  dataSheet.addRow(['Particulars', 'Qty.', 'Rate', 'Amount in Rs.']);
+  // ── Machinery rows ──
+  const machineryStartRow = 54;
   const machineryItems = dprData.machineryItems || [];
-  let totalMachinery = 0;
-  for (const m of machineryItems) {
-    if (m.name) { dataSheet.addRow([m.name, m.quantity, m.rate, m.amount]); totalMachinery += m.amount || 0; }
+  for (let i = 0; i < 13; i += 1) {
+    const item = machineryItems[i] || {};
+    const row = machineryStartRow + i;
+    setCell(dataSheet, `B${row}`, item.name);
+    setCell(dataSheet, `F${row}`, item.quantity);
+    setCell(dataSheet, `G${row}`, item.rate);
+    setCell(dataSheet, `H${row}`, item.amount);
   }
-  dataSheet.addRow(['Total', '', '', totalMachinery]);
 
-  // Other Costs
-  dataSheet.addRow([]);
-  dataSheet.addRow(['OTHER CAPITAL COSTS']);
-  dataSheet.addRow(['Preliminary/Pre-operative', dprData.otherCosts?.preliminaryCost || 0]);
-  dataSheet.addRow(['Furniture & Fixtures', dprData.otherCosts?.furnitureFixtures || 0]);
-  dataSheet.addRow(['Contingency', dprData.otherCosts?.contingency || 0]);
+  // ── Other capital costs ──
+  setCell(dataSheet, 'H70', dprData.otherCosts?.preliminaryCost);
+  setCell(dataSheet, 'H72', dprData.otherCosts?.furnitureFixtures);
+  setCell(dataSheet, 'H74', dprData.otherCosts?.contingency);
 
-  // Working Capital (exact Excel column mapping: Element | No. of Days | Amount)
-  dataSheet.addRow([]);
-  dataSheet.addRow(['WORKING CAPITAL']);
-  dataSheet.addRow(['Element of Working Capital', 'No. of Days', 'Amount']);
-  const wcItems = dprData.workingCapitalItems || [];
-  let totalWorkingCapital = 0;
-  for (const w of wcItems) {
-    dataSheet.addRow([w.element, w.noOfDays, w.amount]);
-    totalWorkingCapital += w.amount || 0;
-  }
-  dataSheet.addRow(['Total', '', totalWorkingCapital]);
-
-  // Sales/Revenue (exact Excel column mapping)
-  dataSheet.addRow([]);
-  dataSheet.addRow(['SALES / REVENUE']);
-  dataSheet.addRow(['Product', 'Rate/Unit', 'Quantity', 'Period', 'Annual Amount']);
+  // ── Sales/revenue rows ──
+  const salesStartRow = 94;
   const salesItems = dprData.salesItems || [];
-  let totalAnnualSales = 0;
-  for (const s of salesItems) {
-    const annual = s.amount || (s.quantityPeriod === 'monthly'
-      ? (s.ratePerUnit || 0) * (s.quantity || 0) * 12
-      : (s.ratePerUnit || 0) * (s.quantity || 0));
-    dataSheet.addRow([s.productName, s.ratePerUnit, s.quantity, s.quantityPeriod || 'monthly', annual]);
-    totalAnnualSales += annual;
+  for (let i = 0; i < 8; i += 1) {
+    const item = salesItems[i] || {};
+    const row = salesStartRow + i;
+    setCell(dataSheet, `B${row}`, item.productName);
+    setCell(dataSheet, `F${row}`, item.ratePerUnit);
+    setCell(dataSheet, `G${row}`, item.quantity);
+    setCell(dataSheet, `H${row}`, item.amount);
   }
-  dataSheet.addRow(['Total Annual Sales', '', '', '', totalAnnualSales]);
 
-  // Raw Materials
-  dataSheet.addRow([]);
-  dataSheet.addRow(['RAW MATERIALS']);
-  dataSheet.addRow(['Material', 'Unit', 'Rate/Unit', 'Required Units', 'Annual Amount']);
-  const rawMaterialItems = dprData.rawMaterialItems || [];
-  let totalRawMaterials = 0;
-  for (const r of rawMaterialItems) {
-    const annual = r.amount || (r.ratePerUnit || 0) * (r.requiredUnits || 0) * 12;
-    dataSheet.addRow([r.name, r.unit, r.ratePerUnit, r.requiredUnits, annual]);
-    totalRawMaterials += annual;
+  // ── Employment rows ──
+  const employmentStartRow = 121;
+  const employmentItems = dprData.employmentItems || [];
+  for (let i = 0; i < 7; i += 1) {
+    const item = employmentItems[i] || {};
+    const row = employmentStartRow + i;
+    setCell(dataSheet, `E${row}`, item.count);
+    setCell(dataSheet, `F${row}`, item.salary);
+    setCell(dataSheet, `H${row}`, item.annualAmount);
   }
-  dataSheet.addRow(['Total Raw Materials', '', '', '', totalRawMaterials]);
 
-  // Wages (Labor — WAGES section in Excel)
-  dataSheet.addRow([]);
-  dataSheet.addRow(['WAGES']);
-  dataSheet.addRow(['Designation', 'No. of Workers', 'Monthly Wage', 'Months', 'Annual Amount']);
-  const laborItems = dprData.laborItems || [];
-  let totalWages = 0;
-  for (const w of laborItems) {
-    dataSheet.addRow([w.designation, w.noOfWorkers, w.monthlyWage, w.totalMonths, w.annualAmount]);
-    totalWages += w.annualAmount || 0;
-  }
-  dataSheet.addRow(['Total Wages', '', '', '', totalWages]);
-
-  // Staff Salary (SALARY DETAILS section in Excel)
-  dataSheet.addRow([]);
-  dataSheet.addRow(['SALARY DETAILS']);
-  dataSheet.addRow(['Designation', 'No. of Staff', 'Monthly Salary', 'Months', 'Annual Amount']);
-  const staffSalaryItems = dprData.staffSalaryItems || [];
-  let totalSalaries = 0;
-  for (const s of staffSalaryItems) {
-    dataSheet.addRow([s.designation, s.noOfStaff, s.monthlySalary, s.totalMonths, s.annualAmount]);
-    totalSalaries += s.annualAmount || 0;
-  }
-  dataSheet.addRow(['Total Salaries', '', '', '', totalSalaries]);
-
-  // Project Cost Summary & Means of Finance
-  const totalCapitalExpenditure = totalBuilding + totalMachinery + (dprData.otherCosts?.preliminaryCost || 0) + (dprData.otherCosts?.furnitureFixtures || 0) + (dprData.otherCosts?.contingency || 0);
-  const totalProjectCost = totalCapitalExpenditure + totalWorkingCapital;
-  const computed = dprData.computed || {};
-  dataSheet.addRow([]);
-  dataSheet.addRow(['PROJECT COST SUMMARY']);
-  dataSheet.addRow(['Capital Expenditure', totalCapitalExpenditure]);
-  dataSheet.addRow(['Working Capital', totalWorkingCapital]);
-  dataSheet.addRow(['TOTAL PROJECT COST', totalProjectCost]);
-  dataSheet.addRow([]);
-  dataSheet.addRow(['MEANS OF FINANCE']);
-  dataSheet.addRow(['Own Contribution', `${((computed.ownContributionPct || 0.05) * 100).toFixed(0)}%`, computed.ownContributionAmt || totalProjectCost * (computed.ownContributionPct || 0.05)]);
-  dataSheet.addRow(['Bank Finance', `${((1 - (computed.ownContributionPct || 0.05)) * 100).toFixed(0)}%`, computed.bankLoanAmt || totalProjectCost * (1 - (computed.ownContributionPct || 0.05))]);
-  dataSheet.addRow(['Subsidy (Margin Money)', `${((computed.subsidyPct || 0.25) * 100).toFixed(0)}%`, computed.subsidyAmt || totalProjectCost * (computed.subsidyPct || 0.25)]);
-  dataSheet.addRow(['Net Liability After Lock-In', computed.netLiabilityAfterLockIn]);
-
-  // ── Sheet 2: DPR_print ──
-  const dprPrint = workbook.addWorksheet('DPR_print');
-  dprPrint.addRow(['PROJECT AT A GLANCE - TOP SHEET']);
-  dprPrint.addRow(['1', 'Name of the Beneficiary', dprData.applicant?.name]);
-  dprPrint.addRow(['2', 'Constitution', dprData.project?.legalStatus]);
-  dprPrint.addRow(['3', 'Total Project Cost', totalProjectCost]);
-  dprPrint.addRow(['4', 'Own Contribution', `${((computed.ownContributionPct || 0.05) * 100).toFixed(0)}%`, computed.ownContributionAmt]);
-  dprPrint.addRow(['5', 'Bank Loan (Sanctioned)', computed.bankLoanAmt]);
-  dprPrint.addRow(['6', 'Subsidy (Margin Money)', `${((computed.subsidyPct || 0.25) * 100).toFixed(0)}%`, computed.subsidyAmt]);
-  dprPrint.addRow(['7', 'Net Liability After Lock-In', computed.netLiabilityAfterLockIn]);
-  dprPrint.addRow([]);
-  dprPrint.addRow(['DETAILED PROJECT REPORT']);
-  dprPrint.addRow(['1', 'INTRODUCTION', dprData.project?.activityDescription || '']);
-  dprPrint.addRow(['2', 'ABOUT THE BENEFICIARY', dprData.applicant?.name]);
-  dprPrint.addRow(['3', 'COST OF PROJECT']);
-  dprPrint.addRow(['', 'Building', totalBuilding]);
-  dprPrint.addRow(['', 'Machinery', totalMachinery]);
-  dprPrint.addRow(['', 'Preliminary', dprData.otherCosts?.preliminaryCost || 0]);
-  dprPrint.addRow(['', 'Furniture & Fixtures', dprData.otherCosts?.furnitureFixtures || 0]);
-  dprPrint.addRow(['', 'Contingency', dprData.otherCosts?.contingency || 0]);
-  dprPrint.addRow(['', 'Total Capital Expenditure', totalCapitalExpenditure]);
-  dprPrint.addRow(['', 'Working Capital', totalWorkingCapital]);
-  dprPrint.addRow(['', 'TOTAL PROJECT COST', totalProjectCost]);
-  // ... Loan Repayment Schedule, Depreciation, P&L, Balance Sheet, Cash Flow, DSCR, BEP
-
-  // ── Sheet 3: Project_Report ──
-  const projReport = workbook.addWorksheet('Project_Report');
-  projReport.addRow(['DETAILED PROJECT REPORT']);
-  projReport.addRow(['1', 'Name of Project', dprData.project?.projectName]);
-  projReport.addRow(['2', 'Name of Promoter', dprData.applicant?.name]);
-  projReport.addRow(['3', 'Father/Spouse Name', dprData.applicant?.fatherSpouseName]);
-  projReport.addRow(['4', 'State', dprData.applicant?.state]);
-  projReport.addRow(['5', 'Total Project Cost', totalProjectCost]);
-  // ... complete 19 sections
-
-  // ── Sheet 4: Application_form ──
-  const appForm = workbook.addWorksheet('Application_form');
-  appForm.addRow(['PMEGP APPLICATION FORM']);
-  appForm.addRow(['Name of Applicant', dprData.applicant?.name]);
-  appForm.addRow(['Address', dprData.applicant?.address]);
-  appForm.addRow(['Category', dprData.applicant?.category]);
-  appForm.addRow(['TOTAL PROJECT COST', totalProjectCost]);
-
-  // ── Sheet 5: DPR_FRONT ──
-  const front = workbook.addWorksheet('DPR_FRONT');
-  front.addRow(['Project Report on', dprData.project?.projectName]);
-  front.addRow(['Promoter:', dprData.applicant?.name]);
-  front.addRow(['Prepared By:', 'PMEGP DPR Generator']);
-  front.addRow(['Date:', new Date().toLocaleDateString('en-IN')]);
+  // ── Do not overwrite canonical formulas G85/G86/G87. ──
+  // Let the template formulas calculate, then verify the exported file after opening/recalculation.
 
   await workbook.xlsx.writeFile(filePath);
 }
@@ -3981,12 +4010,12 @@ UI Layer (React components)
     ↓ user input
 Zustand Store (dpr-store, ui-store, ai-store)
     ↓ raw form data
-Validation Engine (src/lib/validation/)
-    ↓ validated data
 PMEGP Rules Engine (src/lib/pmegp-rules.ts)
     ↓ eligibility + subsidy rules
 Financial Calculation Engine (src/lib/dpr-calculations.ts)
     ↓ computed financial model
+Validation Engine (src/lib/validation/)
+    ↓ validation issues/warnings
 Report Model (DPRData with computed fields)
     ↓ structured data only
 Excel Export Engine (electron/excel-export.ts)
@@ -4094,7 +4123,6 @@ export function runAllValidations(dprData: Partial<DPRData>): ValidationResult {
 | `file:export-pdf` | `{ html: string }` | `string \| null` (filePath) | `EXPORT_FAILED` |
 | `notification:show` | `{ title, body }` | `void` | `IPC_FAILURE` |
 | `app:version` | `{}` | `string` | `IPC_FAILURE` |
-| `app:platform` | `{}` | `string` | `IPC_FAILURE` |
 | `dialog:select-folder` | `{}` | `string \| null` | `IPC_FAILURE` |
 | `ai:chat` | `{ messages, dprData, config: { apiKey?, baseURL?, model? } }` | `{ success, response }` | `AI_FAILURE` |
 | `ai:test` | `{ config: { apiKey?, baseURL?, model? } }` | `{ success, message, latencyMs }` | `AI_FAILURE` |
@@ -4209,7 +4237,7 @@ export function calculateEMI(principal: number, annualRate: number, months: numb
 
 > Single source of truth for audited PMEGP formula metadata. **This file does NOT duplicate calculation logic** — it delegates to `pmegp-rules.ts` and `dpr-calculations.ts` for actual computation. It provides metadata (source references, thresholds, units) so that UI components and export code can look up formula properties without importing the calculation functions directly.
 >
-> Authority chain: `Workbook Audit → Formula Registry → Calculation Engine`. Only formulas verified by workbook audit should be registered as canonical.
+> Authority chain: `Workbook Audit → Formula Registry → Calculation Engine → Workbook Mapper/Export`. Only formulas verified by workbook audit should be registered as canonical. Canonical formulas from the workbook audit are `G85` for own contribution, `G86` for bank finance, and `G87` for subsidy rate. `L25` and `R57:R60` are not canonical and must not be codified as subsidy authority.
 
 ```typescript
 // src/lib/formula-registry.ts
@@ -4246,7 +4274,7 @@ export const FORMULAS = {
     calculate: calculateOwnContributionRate,  // ⭐ Delegates to pmegp-rules.ts
     description: 'Own contribution % from G85: 10% for Male+General, otherwise 5%',
   },
-  SECOND_LOAN_SUBSIDY: {
+  SECOND_LOAN_SUBSIDY_FORMULA: {
     id: 'SECOND_LOAN_SUBSIDY',
     name: '2nd Loan Subsidy Rate',
     source: 'PMEGP Revised Guidelines Dec 2023',
