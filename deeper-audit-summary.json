@@ -1,0 +1,404 @@
+{
+  "Metadata": {
+    "Application_form": {
+      "print_area": "'Application_form'!$A$1:$J$77",
+      "hidden_rows": [
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88
+      ],
+      "hidden_cols": []
+    },
+    "DataSheet": {
+      "print_area": "'DataSheet'!$A$1:$J$268",
+      "hidden_rows": [
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        21,
+        22,
+        23,
+        48,
+        179,
+        180,
+        181,
+        182,
+        183,
+        184,
+        185,
+        186,
+        187,
+        188,
+        189,
+        190,
+        191,
+        192,
+        193,
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209,
+        210,
+        211,
+        212,
+        213,
+        214,
+        215,
+        216,
+        217,
+        218,
+        219,
+        220,
+        221,
+        222,
+        223,
+        224,
+        225,
+        226,
+        227,
+        228,
+        261,
+        262,
+        263,
+        264,
+        265,
+        266,
+        267
+      ],
+      "hidden_cols": [
+        "K",
+        "L",
+        "M"
+      ]
+    },
+    "DPR_print": {
+      "print_area": "'DPR_print'!$A$1:$J$405",
+      "hidden_rows": [],
+      "hidden_cols": [
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "W"
+      ]
+    },
+    "Project_Report": {
+      "print_area": "'Project_Report'!$A$1:$K$416",
+      "hidden_rows": [
+        417,
+        418,
+        419,
+        420,
+        421,
+        422,
+        423,
+        424,
+        425
+      ],
+      "hidden_cols": []
+    },
+    "DPR_FRONT": {
+      "print_area": "'DPR_FRONT'!$A$1:$AJ$39",
+      "hidden_rows": [
+        40,
+        41,
+        42
+      ],
+      "hidden_cols": [
+        "J"
+      ]
+    }
+  },
+  "Data Validations": {},
+  "Unlocked cells with values": [
+    {
+      "cell": "L25",
+      "value": "=IF(DataSheet!M59=4,IF(AND(DataSheet!M56=1,DataSheet!M70=8),15%,25%),IF(AND(DataSheet!M56=1,DataSheet!M70=8),25%,35%))",
+      "is_formula": true,
+      "data_type": "f"
+    },
+    {
+      "cell": "M36",
+      "value": "=L59:L62",
+      "is_formula": true,
+      "data_type": "f"
+    },
+    {
+      "cell": "B41",
+      "value": "2 Floor Building",
+      "is_formula": false,
+      "data_type": "s"
+    },
+    {
+      "cell": "K46",
+      "value": " ",
+      "is_formula": false,
+      "data_type": "s"
+    },
+    {
+      "cell": "B54",
+      "value": "CNC",
+      "is_formula": false,
+      "data_type": "s"
+    },
+    {
+      "cell": "M55",
+      "value": "1",
+      "is_formula": false,
+      "data_type": "n"
+    },
+    {
+      "cell": "Q55",
+      "value": "=IF(IF(AND(DataSheet!M55=1,DataSheet!M70=9,DataSheet!M64=2),15%,25%),IF(AND(DataSheet!M55=1,DataSheet!M70=9,DataSheet!M64=1),25%,35%))",
+      "is_formula": true,
+      "data_type": "f"
+    },
+    {
+      "cell": "R57",
+      "value": "=IF(M64=2,IF(AND(M55=1,M70=9),15,25),IF(AND(M55=1,M70=9),25,35))",
+      "is_formula": true,
+      "data_type": "f"
+    },
+    {
+      "cell": "R58",
+      "value": "=IF(AND(M55=1,M70=9,M64=2),15,25)",
+      "is_formula": true,
+      "data_type": "f"
+    },
+    {
+      "cell": "M59",
+      "value": "1",
+      "is_formula": false,
+      "data_type": "n"
+    },
+    {
+      "cell": "R59",
+      "value": "=IF(AND(M55=1,M64=1,M70=9),35,25)",
+      "is_formula": true,
+      "data_type": "f"
+    },
+    {
+      "cell": "R60",
+      "value": "=IF(AND(M57=1,M72=9,M66=2),15,0)",
+      "is_formula": true,
+      "data_type": "f"
+    },
+    {
+      "cell": "P61",
+      "value": "1",
+      "is_formula": false,
+      "data_type": "n"
+    },
+    {
+      "cell": "M64",
+      "value": "1",
+      "is_formula": false,
+      "data_type": "n"
+    },
+    {
+      "cell": "M67",
+      "value": "1",
+      "is_formula": false,
+      "data_type": "n"
+    },
+    {
+      "cell": "M70",
+      "value": "1",
+      "is_formula": false,
+      "data_type": "n"
+    },
+    {
+      "cell": "M80",
+      "value": "1",
+      "is_formula": false,
+      "data_type": "n"
+    },
+    {
+      "cell": "M83",
+      "value": "4",
+      "is_formula": false,
+      "data_type": "n"
+    },
+    {
+      "cell": "M91",
+      "value": "2",
+      "is_formula": false,
+      "data_type": "n"
+    },
+    {
+      "cell": "B121",
+      "value": "Labor",
+      "is_formula": false,
+      "data_type": "s"
+    },
+    {
+      "cell": "F179",
+      "value": "5",
+      "is_formula": false,
+      "data_type": "n"
+    },
+    {
+      "cell": "F180",
+      "value": "2",
+      "is_formula": false,
+      "data_type": "n"
+    }
+  ],
+  "Numeric hardcoded": [
+    {
+      "cell": "A8",
+      "value": 1.1,
+      "locked": true
+    },
+    {
+      "cell": "A10",
+      "value": 1.2,
+      "locked": true
+    },
+    {
+      "cell": "A12",
+      "value": 2,
+      "locked": true
+    },
+    {
+      "cell": "A13",
+      "value": 3,
+      "locked": true
+    },
+    {
+      "cell": "A21",
+      "value": 4,
+      "locked": true
+    },
+    {
+      "cell": "A25",
+      "value": 5,
+      "locked": true
+    },
+    {
+      "cell": "A29",
+      "value": 6,
+      "locked": true
+    },
+    {
+      "cell": "A31",
+      "value": 8,
+      "locked": true
+    },
+    {
+      "cell": "M55",
+      "value": 1,
+      "locked": false
+    },
+    {
+      "cell": "M59",
+      "value": 1,
+      "locked": false
+    },
+    {
+      "cell": "P61",
+      "value": 1,
+      "locked": false
+    },
+    {
+      "cell": "M64",
+      "value": 1,
+      "locked": false
+    },
+    {
+      "cell": "M67",
+      "value": 1,
+      "locked": false
+    },
+    {
+      "cell": "M70",
+      "value": 1,
+      "locked": false
+    },
+    {
+      "cell": "M80",
+      "value": 1,
+      "locked": false
+    },
+    {
+      "cell": "M83",
+      "value": 4,
+      "locked": false
+    },
+    {
+      "cell": "M91",
+      "value": 2,
+      "locked": false
+    },
+    {
+      "cell": "G120",
+      "value": 12,
+      "locked": true
+    },
+    {
+      "cell": "G133",
+      "value": 12,
+      "locked": true
+    },
+    {
+      "cell": "F179",
+      "value": 5,
+      "locked": false
+    },
+    {
+      "cell": "F180",
+      "value": 2,
+      "locked": false
+    },
+    {
+      "cell": "G180",
+      "value": 12,
+      "locked": true
+    },
+    {
+      "cell": "B222",
+      "value": 0,
+      "locked": true
+    },
+    {
+      "cell": "B223",
+      "value": 0,
+      "locked": true
+    },
+    {
+      "cell": "F224",
+      "value": 0,
+      "locked": true
+    }
+  ]
+}

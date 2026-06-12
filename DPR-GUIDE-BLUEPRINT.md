@@ -20,9 +20,9 @@ Desktop-only Windows application.
 | **Workbook Template** | `DPRPACKAGE.xls` — canonical PMEGP DPR workbook/template source of truth |
 | **Target OS** | Windows 10 / Windows 11 |
 | **Runtime** | Electron |
-| **UI Framework** | Next.js 16 |
+| **UI Framework** | Next.js 16, pinned to a stable release after dependency verification |
 | **Language** | TypeScript |
-| **Styling** | Tailwind CSS 4 + shadcn/ui |
+| **Styling** | Tailwind CSS 4 + shadcn/ui, pinned to stable versions after dependency verification, pinned to stable versions after dependency verification |
 | **State** | Zustand |
 | **Excel Export** | ExcelJS or workbook template engine, depending on verified `.xls` support |
 | **AI SDK** | OpenAI SDK (Electron main process only — user provides API key) |
@@ -1436,46 +1436,6 @@ import * as path from 'path';
 import { app } from 'electron';
 import { exportDPRToExcel } from './excel-export';  // ⭐ Single authoritative Excel export engine
 
-// ─── Schema Migration (mirrored from dpr-types.ts) ───
-// The migration function lives in dpr-types.ts for the renderer,
-// but the Electron main process needs its own copy since it can't
-// import from src/ (renderer-only, different build pipeline).
-// Keep both copies in sync, or extract to a shared package.
-const CURRENT_SCHEMA_VERSION = 1;
-
-function migrateDPRData(data: any, fromVersion: number): any {
-  let migrated = { ...data };
-  if (fromVersion < 1) {
-    if (migrated.project && !('isNERHill' in migrated.project)) {
-      migrated.project.isNERHill = false;
-    }
-    if (migrated.project && !('noOfEmployees' in migrated.project)) {
-      migrated.project.noOfEmployees = 0;
-    }
-  }
-  return migrated;
-}
-
-export function setupIPCHandlers() {
-
-  // ── Window Controls ──
-  ipcMain.handle('window:minimize', (e) => {
-    BrowserWindow.fromWebContents(e.sender)?.minimize();
-  });
-
-  ipcMain.handle('window:maximize', (e) => {
-    const win = BrowserWindow.fromWebContents(e.sender);
-    if (win?.isMaximized()) {
-      win.unmaximize();
-    } else {
-      win?.maximize();
-    }
-  });
-
-  ipcMain.handle('window:close', (e) => {
-    BrowserWindow.fromWebContents(e.sender)?.close();
-  });
-
   ipcMain.handle('window:isMaximized', (e) => {
     return BrowserWindow.fromWebContents(e.sender)?.isMaximized();
   });
@@ -1504,7 +1464,9 @@ export function setupIPCHandlers() {
     return null;
   });
 
-  // ── Load DPR from JSON (with schema version check) ──
+  // ── Load DPR from JSON (renderer owns schema migration) ──
+  // Main process only reads the file and returns raw JSON. The renderer imports
+  // migrateDPRData from src/lib/dpr-types.ts and applies it after receiving data.
   ipcMain.handle('file:load-dpr', async (e) => {
     const { canceled, filePaths } = await dialog.showOpenDialog(
       BrowserWindow.fromWebContents(e.sender)!,
@@ -1515,23 +1477,16 @@ export function setupIPCHandlers() {
       }
     );
     if (!canceled && filePaths.length > 0) {
-      const raw = fs.readFileSync(filePaths[0], 'utf-8');
-      const parsed = JSON.parse(raw);
-      // Versioned format: extract data payload + migrate if needed
-      if (parsed.schemaVersion) {
-        const migratedData = migrateDPRData(parsed.data, parsed.schemaVersion);
-        return JSON.stringify(migratedData);
-      }
-      // Legacy format (no schema version): treat as v0, add missing fields
-      const migratedLegacy = migrateDPRData(parsed, 0);
-      return JSON.stringify(migratedLegacy);
+      return fs.readFileSync(filePaths[0], 'utf-8');
     }
     return null;
   });
 
   // ── Export DPR as Excel (.xlsx) ──
   // ⭐ DELEGATES to excel-export.ts — NO inline calculation or workbook construction here.
-  // All Excel generation logic lives in electron/excel-export.ts (the single authoritative export engine).
+  // All Excel generation lorenderer owns schema migration) ──
+  // Main process only reads the file and returns raw JSON. The renderer imports
+  // migrateDPRData from src/lib/dpr-types.ts and applies it after receiving data.xport.ts (the single authoritative export engine).
   ipcMain.handle('file:export-excel', async (e, data: string) => {
     const { canceled, filePath } = await dialog.showSaveDialog(
       BrowserWindow.fromWebContents(e.sender)!,
@@ -1542,16 +1497,7 @@ export function setupIPCHandlers() {
       }
     );
     if (!canceled && filePath) {
-      const dprData = JSON.parse(data);
-      await exportDPRToExcel(dprData, filePath);
-      return filePath;
-    }
-    return null;
-  });
-
-  // ── Export DPR as PDF ──
-  ipcMain.handle('file:export-pdf', async (e, html: string) => {
-    const { canceled, filePath } = await dialog.showSaveDialog(
+      return fs.readFileSync(filePaths[0], 'utf-8'ialog.showSaveDialog(
       BrowserWindow.fromWebContents(e.sender)!,
       {
         title: 'Export DPR as PDF',
@@ -3233,7 +3179,10 @@ export interface ProfitLossStatement {
   netProfitBeforeTax: number;
   tax: number;
   netProfitAfterTax: number;
-  // ⚠️ Tax rate: Assume 25% for micro-enterprises (confirm with CA). Include tax provision for accurate DSCR and bank acceptance.
+  taxRate: number;
+  taxAssumption: 'configurable-user-input' | 'ca-confirmed' | 'provisional-estimate';
+  // Tax is not hard-coded. For proprietorships, presumptive taxation, or CA-reviewed assumptions,
+  // the renderer should pass the selected taxRate/taxAssumption into calculations and reports.
 }
 
 export interface BalanceSheetItem {
@@ -3257,7 +3206,10 @@ export interface CashFlowItem {
   netProfit: number;
   depreciation: number;
   interest: number;
-  operatingCashFlow: number;
+  taxRate: number;
+  taxAssumption: 'configurable-user-input' | 'ca-confirmed' | 'provisional-estimate';
+  // Tax is not hard-coded. For proprietorships, presumptive taxation, or CA-reviewed assumptions,
+  // the renderer should pass the selected taxRate/taxAssumption into calculations and reports
   loanRepayment: number;
   netCashFlow: number;
   cumulativeCashFlow: number;
