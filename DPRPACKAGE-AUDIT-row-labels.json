@@ -1,0 +1,1628 @@
+[
+  {
+    "sheet": "Application_form",
+    "row": 1,
+    "labels": [
+      "Application ID:",
+      "(For office use)"
+    ]
+  },
+  {
+    "sheet": "Application_form",
+    "row": 3,
+    "labels": [
+      "APPLICATION FORM FOR FINANCIAL ASSISTANCE UNDER PRIME MINISTERS \nEMPLOYMENT GENERATION PROGRAMME (PMEGP)"
+    ]
+  },
+  {
+    "sheet": "Application_form",
+    "row": 21,
+    "labels": [
+      "Khadi & V.I. Commission"
+    ]
+  },
+  {
+    "sheet": "Application_form",
+    "row": 22,
+    "labels": [
+      "Khadi & V.I.Board"
+    ]
+  },
+  {
+    "sheet": "Application_form",
+    "row": 23,
+    "labels": [
+      "District Industries Center"
+    ]
+  },
+  {
+    "sheet": "Application_form",
+    "row": 24,
+    "labels": [
+      "District Industries Center"
+    ]
+  },
+  {
+    "sheet": "Application_form",
+    "row": 54,
+    "labels": [
+      "Name of the project / business activity proposed :"
+    ]
+  },
+  {
+    "sheet": "Application_form",
+    "row": 56,
+    "labels": [
+      "Amount of loan required (in Rs.)"
+    ]
+  },
+  {
+    "sheet": "Application_form",
+    "row": 57,
+    "labels": [
+      "Building Type",
+      "Capital Expenditure Loan"
+    ]
+  },
+  {
+    "sheet": "Application_form",
+    "row": 58,
+    "labels": [
+      "Workshed\nBuilding etc.",
+      "Machinery/ \nEquipment/Furniture",
+      "Pre\n Operative\nCost",
+      "Working \nCapital /\n Cash Credit\n Limit",
+      "Total"
+    ]
+  },
+  {
+    "sheet": "Application_form",
+    "row": 59,
+    "labels": [
+      "Rented"
+    ]
+  },
+  {
+    "sheet": "Application_form",
+    "row": 60,
+    "labels": [
+      "Details of earlier or current Loan/Grant and subsidy availed from Central/State Govt. Scheme/ or any other Similar Scheme."
+    ]
+  },
+  {
+    "sheet": "Application_form",
+    "row": 61,
+    "labels": [
+      "Activity of the Project with Address",
+      "Amount",
+      "Year of Sanction"
+    ]
+  },
+  {
+    "sheet": "Application_form",
+    "row": 63,
+    "labels": [
+      "I certify that all information furnished by me is true; and that I and any of my dependent have not borrowed any money under subsidy linked scheme from any Central / State Government or bank for establishing any such project"
+    ]
+  },
+  {
+    "sheet": "Application_form",
+    "row": 65,
+    "labels": [
+      "Place:"
+    ]
+  },
+  {
+    "sheet": "Application_form",
+    "row": 66,
+    "labels": [
+      "Date:",
+      "Signature of the Applicant"
+    ]
+  },
+  {
+    "sheet": "Application_form",
+    "row": 68,
+    "labels": [
+      "For Official Use only:",
+      "(Rejected / to be placed before District Task force Committee)"
+    ]
+  },
+  {
+    "sheet": "Application_form",
+    "row": 69,
+    "labels": [
+      "Reason (if Rejected):"
+    ]
+  },
+  {
+    "sheet": "Application_form",
+    "row": 72,
+    "labels": [
+      "Place:",
+      "Signature, Name & Designation of Officer"
+    ]
+  },
+  {
+    "sheet": "Application_form",
+    "row": 73,
+    "labels": [
+      "Date:"
+    ]
+  },
+  {
+    "sheet": "Application_form",
+    "row": 76,
+    "labels": [
+      "NOTE"
+    ]
+  },
+  {
+    "sheet": "Application_form",
+    "row": 77,
+    "labels": [
+      "• Own contribution must be invested 5% for SC/ST/OBC/PHC/woman/ Ex-serviceman/ North East Reason/Hill Boarder Area and 10% for General \n• Total Project Cost should not exceed 25 lakhs for Manufacturing unit and 10 lakhs for service unit.\n• Applicant will not be entitled  for additional  Margin Money(Subsidy) in case of Own Contribution  over and above the prescribed limit.\n• VIIIth  pass for Manufacturing Unit above Rs.10 lakhs project cost and under Service Sector above  Rs.5 lakhs \n• Application should be submitted complete in all respect along with attested  copies of the following documents:\n1. Certificate of qualification-academic and technical (if  project cost above 5 lakhs under service industry  or above 10 lakhs under Manufacturing industry)\n2. Relevant Certificate for SC/ST/OBC/Minority/Ex-Servicemen/PHC\n3. if Entrepreneur Development programme(EDP) training undergone (at least for two weeks) then submit photocopy of the certificate"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 1,
+    "labels": [
+      "DATA INPUT SHEET"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 5,
+    "labels": [
+      "Preference for sponsoring agency of the project :",
+      "(mark √ )"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 6,
+    "labels": [
+      "Unit Location (As per revenue record) :",
+      "(mark √ )"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 7,
+    "labels": [
+      "KVIC",
+      "√",
+      "KVIB",
+      "DIC",
+      "COIR Board"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 8,
+    "labels": [
+      "Name of the Applicant/Institution"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 12,
+    "labels": [
+      "Gender",
+      "Male",
+      "√",
+      "Female",
+      "Transgender"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 13,
+    "labels": [
+      "Address of the Proposed location of Unit:",
+      "Rural",
+      "√",
+      "Urban"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 16,
+    "labels": [
+      "Taluk/Block:"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 17,
+    "labels": [
+      "District:",
+      "Pin:"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 18,
+    "labels": [
+      "State:"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 19,
+    "labels": [
+      "Email:",
+      "Mobile:",
+      "Urban"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 21,
+    "labels": [
+      "Qualification"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 22,
+    "labels": [
+      "Academic",
+      "Technical"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 23,
+    "labels": [
+      "12th Pass"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 25,
+    "labels": [
+      "Whether the applicant belongs to (mark √)"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 26,
+    "labels": [
+      "SC",
+      "ST",
+      "OBC",
+      "PHC",
+      "Ex- Service man",
+      "Minority",
+      "Hill Border Area",
+      "Aspirational Districts"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 27,
+    "labels": [
+      "√"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 29,
+    "labels": [
+      "Whether the project (mark √)",
+      "Manufacturing Unit",
+      "√",
+      "Service Unit"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 31,
+    "labels": [
+      "Name of the project / business activity proposed :"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 34,
+    "labels": [
+      "Legal Status:"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 36,
+    "labels": [
+      "Land"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 39,
+    "labels": [
+      "BUILDING DETAILS"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 40,
+    "labels": [
+      "Particulars",
+      "Area",
+      "Rate/Sq.ft",
+      "Amount in Rs."
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 41,
+    "labels": [
+      "2 Floor Building"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 52,
+    "labels": [
+      "MACHINERY DETAILS"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 53,
+    "labels": [
+      "Particulars",
+      "Qty.",
+      "Rate",
+      "Amount in Rs."
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 54,
+    "labels": [
+      "CNC"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 55,
+    "labels": [
+      "Male"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 56,
+    "labels": [
+      "Female"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 57,
+    "labels": [
+      "Transgender"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 59,
+    "labels": [
+      "KVIC"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 60,
+    "labels": [
+      "KVIB"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 61,
+    "labels": [
+      "DIC"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 62,
+    "labels": [
+      "COIR Board"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 64,
+    "labels": [
+      "Rural"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 65,
+    "labels": [
+      "Urban"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 67,
+    "labels": [
+      "Total",
+      "No"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 68,
+    "labels": [
+      "Yes"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 70,
+    "labels": [
+      "d.  Preliminary & Pre-operative Cost :",
+      "SC"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 71,
+    "labels": [
+      "ST"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 72,
+    "labels": [
+      "e.  Furniture & Fixtures                         :",
+      "OBC"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 73,
+    "labels": [
+      "PHC"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 74,
+    "labels": [
+      "f.   Contingency/Others/Miscellaneous                                    :",
+      "Ex- Serviceman"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 75,
+    "labels": [
+      "Minority"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 76,
+    "labels": [
+      "Working Capital                                :",
+      "Hill Boarder Area"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 77,
+    "labels": [
+      "Aspirational Districts"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 78,
+    "labels": [
+      "General"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 80,
+    "labels": [
+      "Manufacturing"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 81,
+    "labels": [
+      "Service"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 83,
+    "labels": [
+      "Means of Financing",
+      "Under 8th"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 84,
+    "labels": [
+      "8th Pass"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 85,
+    "labels": [
+      "Own Contribution                                :",
+      "10th Pass"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 86,
+    "labels": [
+      "Bank Finance                                    :",
+      "12th Pass"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 87,
+    "labels": [
+      "Margin Money (Govt. Subsidy)                   :",
+      "Graduate"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 88,
+    "labels": [
+      "Post Graduate"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 89,
+    "labels": [
+      "PhD"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 91,
+    "labels": [
+      "DETAILS OF SALES",
+      "Own"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 92,
+    "labels": [
+      "Particulars of Products",
+      "Rate/",
+      "Qantity",
+      "Amount in Rs.",
+      "Rented"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 93,
+    "labels": [
+      "Unit",
+      "Leased"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 102,
+    "labels": [
+      "Total"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 105,
+    "labels": [
+      "RAW MATERIALS"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 106,
+    "labels": [
+      "Particulars",
+      "Unit",
+      "Rate/Unit",
+      "Reqd. Unit",
+      "Amount In Rs."
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 116,
+    "labels": [
+      "Total"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 118,
+    "labels": [
+      "WAGES"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 119,
+    "labels": [
+      "Particulars",
+      "No. of",
+      "Wages Per Month",
+      "Amount in Rs."
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 120,
+    "labels": [
+      "Worker",
+      "Total Month"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 121,
+    "labels": [
+      "Labor"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 128,
+    "labels": [
+      "Total"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 131,
+    "labels": [
+      "SALARY DETAILS"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 132,
+    "labels": [
+      "Particulars",
+      "No. of",
+      "Wages Per Month",
+      "Amount in Rs."
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 133,
+    "labels": [
+      "Staff",
+      "Total Month"
+    ]
+  },
+  {
+    "sheet": "DataSheet",
+    "row": 139,
+    "labels": [
+      "Total"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 1,
+    "labels": [
+      "PROJECT AT A GLANCE - TOP SHEET"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 3,
+    "labels": [
+      "Name of the Beneficiary"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 6,
+    "labels": [
+      "Constitution (legal Status)                                         :",
+      "Individual"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 8,
+    "labels": [
+      "Father's/Spouce's Name"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 10,
+    "labels": [
+      "Unit  Address                        :"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 12,
+    "labels": [
+      "Taluk/Block:"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 13,
+    "labels": [
+      "District :"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 14,
+    "labels": [
+      "Pin:",
+      "State:"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 15,
+    "labels": [
+      "E-Mail                  :"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 16,
+    "labels": [
+      "Mobile"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 17,
+    "labels": [
+      "Product and By Product"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 19,
+    "labels": [
+      "Cost of Project",
+      ":",
+      "Rs."
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 20,
+    "labels": [
+      "Name of the project / business activity proposed :"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 22,
+    "labels": [
+      "Means of Finance"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 23,
+    "labels": [
+      "Term Loan",
+      "Rs."
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 24,
+    "labels": [
+      "KVIC Margin Money",
+      "Rs."
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 25,
+    "labels": [
+      "Own Capital",
+      "Rs."
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 28,
+    "labels": [
+      "Debt Service Coverage Ratio",
+      ":"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 31,
+    "labels": [
+      "Pay Back Period",
+      ":",
+      "Years"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 34,
+    "labels": [
+      "Project Implementation Period",
+      ":",
+      "Months"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 37,
+    "labels": [
+      "Break Even Point",
+      ":"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 40,
+    "labels": [
+      "Employment",
+      ":"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 43,
+    "labels": [
+      "Power Requirement",
+      ":"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 46,
+    "labels": [
+      "Major Raw materials",
+      ":",
+      ",,"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 48,
+    "labels": [
+      "Estimated Annual Sales Turnover",
+      ":",
+      "Rs."
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 50,
+    "labels": [
+      "DETAILED PROJECT REPORT"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 51,
+    "labels": [
+      "INTRODUCTION                :"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 67,
+    "labels": [
+      "ABOUT THE BENEFICIARY                :"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 81,
+    "labels": [
+      "COST OF PROJECT"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 82,
+    "labels": [
+      "A.   Fixed Capital Investment"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 83,
+    "labels": [
+      "a.    Land                                             :",
+      "Own"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 85,
+    "labels": [
+      "b.    Workshed",
+      "Area Sq.ft",
+      "Rate in Rs.",
+      "Amt. In Rs."
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 86,
+    "labels": [
+      "2 Floor Building"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 93,
+    "labels": [
+      "Total"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 95,
+    "labels": [
+      "C.   Machinery",
+      "Qty.",
+      "Rate",
+      "Amount in Rs."
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 96,
+    "labels": [
+      "CNC"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 108,
+    "labels": [
+      "Total"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 109,
+    "labels": [
+      "d.  Preliminary & Pre-operative Cost :",
+      "Rs."
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 111,
+    "labels": [
+      "e.  Furniture & Fixtures                         :",
+      "Rs."
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 113,
+    "labels": [
+      "f.   Contingency/Others/Miscellaneous                                    :",
+      "Rs."
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 115,
+    "labels": [
+      "Total Capital Expenditure               :",
+      "Rs."
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 117,
+    "labels": [
+      "Working Capital                                :",
+      "Rs."
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 119,
+    "labels": [
+      "Total Cost Project                              :",
+      "Rs."
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 122,
+    "labels": [
+      "Means of Financing                        :"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 123,
+    "labels": [
+      "Own Contribution",
+      "Rs."
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 125,
+    "labels": [
+      "Bank Finance                                      :"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 126,
+    "labels": [
+      "Term Loan",
+      "Rs."
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 127,
+    "labels": [
+      "Working Capital",
+      "Rs."
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 129,
+    "labels": [
+      "Total",
+      "Rs."
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 131,
+    "labels": [
+      "Margin Money (Govt. Subsidy) From KVIC",
+      "Rs."
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 132,
+    "labels": [
+      "Margin Money Subsidy received From KVIC will be kept in term deposit as per norms of"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 133,
+    "labels": [
+      "PMEGP in the name of Beneficiary for three years in the financing branch."
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 137,
+    "labels": [
+      "STATEMENT SHOWING THE REPAYMENT OF TERM LOAN  & WORKING CAPITAL :"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 138,
+    "labels": [
+      "TERM LOAN"
+    ]
+  },
+  {
+    "sheet": "DPR_print",
+    "row": 140,
+    "labels": [
+      "Year",
+      "Opening Balance",
+      "Installment",
+      "Closing Balance",
+      "Interest @"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 1,
+    "labels": [
+      "PROJECT REPORT FOR"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 5,
+    "labels": [
+      "Affix latest"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 6,
+    "labels": [
+      "attested"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 7,
+    "labels": [
+      "Photograph"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 9,
+    "labels": [
+      "Name of the Beneficiary"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 10,
+    "labels": [
+      "Individual"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 11,
+    "labels": [
+      "Constitution (legal Status)                                         :",
+      "Individual"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 14,
+    "labels": [
+      "Father's/Spouce's Name"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 16,
+    "labels": [
+      "Unit  Address                        :"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 18,
+    "labels": [
+      "Taluk/Block:"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 19,
+    "labels": [
+      "District :"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 20,
+    "labels": [
+      "Pin:",
+      "State:"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 21,
+    "labels": [
+      "Phone                  :"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 22,
+    "labels": [
+      "E-Mail                  :"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 24,
+    "labels": [
+      "Background of the Proprietor/Partners/Directors  :",
+      "Furnished detailed information in the DPR"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 27,
+    "labels": [
+      "Name of Business House/Group if any :"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 31,
+    "labels": [
+      "Details Other Companies/Units in the group     :"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 32,
+    "labels": [
+      "Other Companies / Units in the Group",
+      "(Rs. in Lakhs)"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 33,
+    "labels": [
+      "Name & Address",
+      "Business",
+      "Equity",
+      "Reserves",
+      "Loans",
+      "Turnover",
+      "*P.B.T",
+      "**P.A.T"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 34,
+    "labels": [
+      "of Company / Unit"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 37,
+    "labels": [
+      "* Profit Before Tax",
+      "** Profit After Tax"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 38,
+    "labels": [
+      "`"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 41,
+    "labels": [
+      "How the activity was financed so far :",
+      "( To be filled up in case of existining unit Only )"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 42,
+    "labels": [
+      "*Source of Funds",
+      "Security",
+      "Rate of",
+      "Repayment per",
+      "Present O/s",
+      "Amount of Default"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 43,
+    "labels": [
+      "Interest",
+      "Month",
+      "( Rs. in '000 )",
+      "(if any)"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 50,
+    "labels": [
+      "If the Unit is an ancillary one, undertaking to"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 51,
+    "labels": [
+      "which it is catering and its address           :"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 56,
+    "labels": [
+      "Employment                                           :",
+      "Present",
+      "Proposed"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 57,
+    "labels": [
+      "Labor"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 69,
+    "labels": [
+      "Total"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 72,
+    "labels": [
+      "Project Details for Proposed New Unit             :",
+      "Copy of detailed project report is enclosed."
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 73,
+    "labels": [
+      "a",
+      "Expansion / Mordenisation                :"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 75,
+    "labels": [
+      "b",
+      "Setting up of New unit                         :"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 77,
+    "labels": [
+      "c",
+      "Activity for proposed new unit            :"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 79,
+    "labels": [
+      "d",
+      "Product / Item proposed to undertake   :"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 82,
+    "labels": [
+      "Capacity (Furnish the details of Installed capacity & production :",
+      "(No. in Units/ Qty. in Kg./Volume in liter per annum)"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 83,
+    "labels": [
+      "Capacity is arrived at on the basis of",
+      "Days working on",
+      "shift basis"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 84,
+    "labels": [
+      "Product &",
+      "Present Installed",
+      "Maximum Prod.",
+      "Proposed Installed",
+      "Maximum Prod."
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 85,
+    "labels": [
+      "By-product if any",
+      "Capacity",
+      "Achieved",
+      "Capacity of 1st Year",
+      "envisaged"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 94,
+    "labels": [
+      "State the manufacturing process in brief     :"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 105,
+    "labels": [
+      "Has the proposed process ever been tried in the"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 106,
+    "labels": [
+      "country or newly adopted?                                     :"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 112,
+    "labels": [
+      "Technical Arrangements                        :"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 122,
+    "labels": [
+      "Describe arrangement for Key Official"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 123,
+    "labels": [
+      "for managing the proposed unit             :"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 124,
+    "labels": [
+      "Technical Manpower"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 126,
+    "labels": [
+      "Administrative Manpower"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 128,
+    "labels": [
+      "Accounting personnel"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 132,
+    "labels": [
+      "Particulars of Land",
+      "Existing",
+      "Proposed"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 133,
+    "labels": [
+      "Location of the Land                            :"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 134,
+    "labels": [
+      "Area of Land                                         :"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 135,
+    "labels": [
+      "Status of the Land                                :"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 136,
+    "labels": [
+      "Nature of Land                                      :"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 137,
+    "labels": [
+      "Availability of Water                             :"
+    ]
+  },
+  {
+    "sheet": "Project_Report",
+    "row": 140,
+    "labels": [
+      "Particulars of Building",
+      "Existing",
+      "Proposed"
+    ]
+  },
+  {
+    "sheet": "DPR_FRONT",
+    "row": 1,
+    "labels": [
+      "Project Report on"
+    ]
+  },
+  {
+    "sheet": "DPR_FRONT",
+    "row": 32,
+    "labels": [
+      "Prepared By:"
+    ]
+  },
+  {
+    "sheet": "DPR_FRONT",
+    "row": 34,
+    "labels": [
+      "Khadi & V.I. Commission"
+    ]
+  },
+  {
+    "sheet": "DPR_FRONT",
+    "row": 37,
+    "labels": [
+      "State:"
+    ]
+  },
+  {
+    "sheet": "DPR_FRONT",
+    "row": 38,
+    "labels": [
+      "e-Mail:"
+    ]
+  },
+  {
+    "sheet": "DPR_FRONT",
+    "row": 39,
+    "labels": [
+      "Ph. No.:",
+      "Fax:"
+    ]
+  }
+]
