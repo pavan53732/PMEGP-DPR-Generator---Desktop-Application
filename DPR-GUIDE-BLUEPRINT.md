@@ -784,9 +784,9 @@ The app must not claim that any bank offers the “best” PMEGP rate. Interest-
 
 ---
 
-### 18. Financial Model Architecture — For App Calculations
+### 6.18 Financial Model Architecture — For App Calculations
 
-#### 18.1 Capacity Utilization (5-Year Projection)
+#### 6.18.1 Capacity Utilization (5-Year Projection)
 
 
 | Year | Utilization |
@@ -797,7 +797,7 @@ The app must not claim that any bank offers the “best” PMEGP rate. Interest-
 | Year 4 | 90% |
 | Year 5 | 90% |
 
-#### 18.2 Depreciation Rates
+#### 6.18.2 Depreciation Rates
 
 
 | Asset | Method | Rate |
@@ -806,7 +806,7 @@ The app must not claim that any bank offers the “best” PMEGP rate. Interest-
 | Machinery | Written Down Value (WDV) | 15% per annum |
 | Furniture & Fixtures | WDV | 10% per annum |
 
-#### 18.3 Key Financial Ratios (Calculated in DPR_print sheet)
+#### 6.18.3 Key Financial Ratios (Calculated in DPR_print sheet)
 
 
 | Ratio | Formula | Purpose |
@@ -817,7 +817,7 @@ The app must not claim that any bank offers the “best” PMEGP rate. Interest-
 | **Current Ratio** | Current Assets / Current Liabilities | Liquidity measure |
 | **Debt-Equity Ratio** | Total Debt / Total Equity | Leverage measure |
 
-#### 18.4 Payback Period
+#### 6.18.4 Payback Period
 
 - Standard: 5 years
 - Implementation Period: Project-specific (user enters value; common range 6–24 months)
@@ -958,7 +958,7 @@ Export safety rules:
   - building rows: existing template capacity only
   - machinery rows: existing template capacity only
   - sales/revenue rows: existing template capacity only
-  - employment rows: existing template capacity only
+  - labor/wages rows: existing template capacity only
 - If user data exceeds template capacity, the app should warn the user and either truncate with disclosure or require manual template expansion before export.
 - Any future template expansion must be performed on a separate template-copy audit branch, followed by formula dependency verification before shipping.
 
@@ -1339,8 +1339,6 @@ function createWindow() {
     frame: false,                    // ⭐ FRAMELESS — custom titlebar
     transparent: false,
     backgroundColor: '#ffffff',
-    titleBarStyle: 'hidden',         // For macOS (optional)
-    trafficLightPosition: { x: 16, y: 16 }, // macOS buttons position
     icon: path.join(__dirname, '../build/icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -1391,16 +1389,23 @@ app.whenReady().then(() => {
   createWindow();
   setupIPCHandlers();
   tray = createTray(mainWindow!);
+});
+
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) createWindow();
+});
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+  app.quit();
 });
 
 app.on('before-quit', () => {
   isQuitting = true;
 });
+
+export function setIsQuitting(value: boolean) {
+  isQuitting = value;
+}
 
 export { mainWindow, isQuitting };
 ```
@@ -1434,7 +1439,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // App info
   getVersion: () => ipcRenderer.invoke('app:version'),
-  getPlatform: () => process.platform,
 
   // File system
   selectFolder: () => ipcRenderer.invoke('dialog:select-folder'),
@@ -1452,6 +1456,8 @@ export interface ElectronAPI {
   exportExcel: (data: string) => Promise<string | null>;
   exportPDF: (html: string) => Promise<string | null>;
   showNotification: (title: string, body: string) => Promise<void>;
+  getVersion: () => Promise<string>;
+  selectFolder: () => Promise<string | null>;
   aiChat: (messages: any[], dprData: any, config?: any) => Promise<{ success: boolean; response?: string; error?: string }>;
   aiTest: (config?: any) => Promise<{ success: boolean; message?: string; latencyMs?: number; error?: string }>;
   aiSuggest: (fieldName: string, context: string, projectType: string, config?: any) => Promise<{ success: boolean; suggestion?: string; error?: string }>;
@@ -1469,14 +1475,28 @@ declare global {
 
 ```typescript
 // electron/ipc-handlers.ts
-import { ipcMain, BrowserWindow, dialog, Notification } from 'electron';
+import { app, ipcMain, BrowserWindow, dialog, Notification } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
-import { app } from 'electron';
 import { exportDPRToExcel } from './excel-export';  // ⭐ Single authoritative Excel export engine
 
+export function setupIPCHandlers(): void {
+  ipcMain.handle('window:minimize', (e) => {
+    BrowserWindow.fromWebContents(e.sender)?.minimize();
+  });
+
+  ipcMain.handle('window:maximize', (e) => {
+    const win = BrowserWindow.fromWebContents(e.sender);
+    if (win?.isMaximized()) win.unmaximize();
+    else win?.maximize();
+  });
+
+  ipcMain.handle('window:close', (e) => {
+    BrowserWindow.fromWebContents(e.sender)?.close();
+  });
+
   ipcMain.handle('window:isMaximized', (e) => {
-    return BrowserWindow.fromWebContents(e.sender)?.isMaximized();
+    return BrowserWindow.fromWebContents(e.sender)?.isMaximized() ?? false;
   });
 
   // ── Save DPR as JSON (with schema versioning) ──
@@ -1594,7 +1614,7 @@ import { exportDPRToExcel } from './excel-export';  // ⭐ Single authoritative 
 // electron/tray.ts
 import { Tray, Menu, BrowserWindow, app, nativeImage } from 'electron';
 import * as path from 'path';
-import { isQuitting } from './main';
+import { setIsQuitting } from './main';
 
 export function createTray(mainWindow: BrowserWindow): Tray {
   const iconPath = path.join(__dirname, '../build/icon.ico');
@@ -1606,7 +1626,7 @@ export function createTray(mainWindow: BrowserWindow): Tray {
     { type: 'separator' },
     { label: '📝 New DPR', click: () => { mainWindow.show(); mainWindow.webContents.send('action:new-dpr'); } },
     { type: 'separator' },
-    { label: '❌ Quit', click: () => { isQuitting = true; app.quit(); } },
+    { label: '❌ Quit', click: () => { setIsQuitting(true); app.quit(); } },
   ]);
 
   tray.setToolTip('PMEGP DPR Generator — PMEGP Report Builder');
@@ -1795,7 +1815,7 @@ ipcMain.handle('ai:suggest', async (e, { fieldName, context, projectType, config
 // src/hooks/use-electron.ts
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 
 export function useElectron() {
   const isElectron = typeof window !== 'undefined' && !!window.electronAPI;
@@ -1827,28 +1847,28 @@ export function useElectron() {
   }, [isElectron]);
 
   // AI calls via Electron IPC
-  const aiChat = useCallback(async (messages: any[], dprData: any) => {
+  const aiChat = useCallback(async (messages: any[], dprData: any, config?: any) => {
     if (!isElectron) {
       console.warn('AI chat requires Electron IPC.');
       return { success: false, error: 'AI features require Electron' };
     }
-    return window.electronAPI.aiChat(messages, dprData);
+    return window.electronAPI.aiChat(messages, dprData, config);
   }, [isElectron]);
 
-  const aiTest = useCallback(async () => {
+  const aiTest = useCallback(async (config?: any) => {
     if (!isElectron) {
       console.warn('AI test requires Electron IPC.');
       return { success: false, message: 'AI features require Electron', latencyMs: 0 };
     }
-    return window.electronAPI.aiTest();
+    return window.electronAPI.aiTest(config);
   }, [isElectron]);
 
-  const aiSuggest = useCallback(async (fieldName: string, context: string, projectType: string) => {
+  const aiSuggest = useCallback(async (fieldName: string, context: string, projectType: string, config?: any) => {
     if (!isElectron) {
       console.warn('AI suggest requires Electron IPC.');
       return { success: false, error: 'AI features require Electron' };
     }
-    return window.electronAPI.aiSuggest(fieldName, context, projectType);
+    return window.electronAPI.aiSuggest(fieldName, context, projectType, config);
   }, [isElectron]);
 
   return {
@@ -3020,6 +3040,7 @@ export interface ApplicantInfo {
   fatherSpouseName: string;        // G14 (was #REF! in Excel — we fix it)
   gender: number;                  // M55: 1=Male, 2=Female, 3=Transgender
   address: string;                 // B14
+  addressLine2?: string;           // B15 — optional continuation/address line
   taluk: string;                   // D16
   district: string;                // B17
   pin: string;                     // H17
@@ -3597,10 +3618,10 @@ export async function exportDPRToExcel(
   // ⚠️ M56 is intentionally NOT used. Workbook audit found it empty/non-canonical.
 
   // ── Applicant/project fields ──
-  setCell(dataSheet, 'B8', dprData.applicant?.name);
-  setCell(dataSheet, 'B14', dprData.applicant?.addressLine1);
+  setCell(dataSheet, 'B9', dprData.applicant?.name);
+  setCell(dataSheet, 'B14', dprData.applicant?.address);
   setCell(dataSheet, 'B15', dprData.applicant?.addressLine2);
-  setCell(dataSheet, 'D16', dprData.applicant?.talukBlock);
+  setCell(dataSheet, 'D16', dprData.applicant?.taluk);
   setCell(dataSheet, 'H17', dprData.applicant?.pin);
   setCell(dataSheet, 'B18', dprData.applicant?.state);
   setCell(dataSheet, 'B19', dprData.applicant?.email);
@@ -3661,14 +3682,29 @@ export async function exportDPRToExcel(
     setCell(dataSheet, `H${row}`, item.amount);
   }
 
-  // ── Employment rows ──
-  const employmentStartRow = 121;
-  const employmentItems = dprData.employmentItems || [];
+  // ── Labor rows (WAGES section) ──
+  const laborStartRow = 121;
+  const laborItems = dprData.laborItems || [];
   for (let i = 0; i < 7; i += 1) {
-    const item = employmentItems[i] || {};
-    const row = employmentStartRow + i;
-    setCell(dataSheet, `E${row}`, item.count);
-    setCell(dataSheet, `F${row}`, item.salary);
+    const item = laborItems[i] || {};
+    const row = laborStartRow + i;
+    setCell(dataSheet, `B${row}`, item.designation);
+    setCell(dataSheet, `E${row}`, item.noOfWorkers);
+    setCell(dataSheet, `F${row}`, item.monthlyWage);
+    setCell(dataSheet, `G${row}`, item.totalMonths);
+    setCell(dataSheet, `H${row}`, item.annualAmount);
+  }
+
+  // ── Staff salary rows (SALARY DETAILS section) ──
+  const staffSalaryStartRow = 134;
+  const staffSalaryItems = dprData.staffSalaryItems || [];
+  for (let i = 0; i < 6; i += 1) {
+    const item = staffSalaryItems[i] || {};
+    const row = staffSalaryStartRow + i;
+    setCell(dataSheet, `B${row}`, item.designation);
+    setCell(dataSheet, `E${row}`, item.noOfStaff);
+    setCell(dataSheet, `F${row}`, item.monthlySalary);
+    setCell(dataSheet, `G${row}`, item.totalMonths);
     setCell(dataSheet, `H${row}`, item.annualAmount);
   }
 
@@ -3827,16 +3863,19 @@ interface DPRStore extends DPRData {
 export const EXAMPLE_DPR_MANUFACTURING: DPRData = {
   applicant: {
     name: 'Rajesh Kumar',
-    fatherName: 'Suresh Kumar',
-    age: 28,
-    gender: 1,      // Male
-    category: 1,     // SC
+    fatherSpouseName: 'Suresh Kumar',
+    gender: 1,                    // Male
     address: 'Village Ramnagar, Post Sundarpur',
-    city: 'Varanasi',
+    taluk: 'Varanasi',
+    district: 'Varanasi',
+    pin: '221001',
     state: 'Uttar Pradesh',
-    phone: '9876543210',
     email: 'rajesh.kumar@example.com',
-    qualification: 3, // 10th Pass
+    mobile: '9876543210',
+    phone: '9876543210',
+    qualification: 3,              // 10th Pass
+    technicalQualification: 'Food Processing',
+    category: 1,                  // SC
   },
   project: {
     projectName: 'Rajesh Food Processing Unit',
@@ -4010,11 +4049,13 @@ UI Layer (React components)
     ↓ user input
 Zustand Store (dpr-store, ui-store, ai-store)
     ↓ raw form data
+Validation Preflight
+    ↓ field-level and cross-field issues before expensive calculations
 PMEGP Rules Engine (src/lib/pmegp-rules.ts)
     ↓ eligibility + subsidy rules
 Financial Calculation Engine (src/lib/dpr-calculations.ts)
     ↓ computed financial model
-Validation Engine (src/lib/validation/)
+Validation Final (with computed totals and formulas)
     ↓ validation issues/warnings
 Report Model (DPRData with computed fields)
     ↓ structured data only
@@ -4048,7 +4089,7 @@ Export Services (Excel + PDF)
 ## 26. 🛡️ Validation Engine — `src/lib/validation/`
 
 
-> Every DPR form field must be validated BEFORE calculation. The validation engine is a separate layer — it does NOT compute, it only validates and returns issues/warnings.
+> Every DPR form field must be validated in two stages: preflight validation on raw form data before calculations, then final validation after totals/computed fields are available. The validation engine is a separate layer — it validates and returns issues/warnings; it does NOT compute financial results.
 
 ```
 src/lib/validation/
@@ -4080,16 +4121,19 @@ export interface ValidationResult {
 }
 
 export function runAllValidations(dprData: Partial<DPRData>): ValidationResult {
-  // ⚠️ IMPORTANT: Callers MUST compute totalProjectCost BEFORE calling this function.
+  // ⚠️ IMPORTANT: Validation runs in two phases.
+  // - Preflight: validate raw form data before expensive calculations.
+  // - Final: after totals/computed fields are merged into dprData.computed, validate project cost, subsidy, and calculation-dependent rules.
   // The per-capita investment check (validateProjectCost) requires a valid project cost,
   // which is derived from: buildingItems + machineryItems + otherCosts + workingCapitalItems.
   // If projectCost is not yet computed, pass it as dprData.computed.projectCost.
   //
   // CORRECT CALLING PATTERN:
-  //   1. Compute totals from raw form data
-  //   2. Run calculations (dpr-calculations.ts)
-  //   3. THEN run validations (this function)
-  //   4. If valid, export
+  //   1. Run preflight validations on raw form data
+  //   2. Compute totals and financial calculations
+  //   3. Merge computed totals into dprData.computed
+  //   4. Run final validations
+  //   5. If valid, export
 
   const issues: ValidationIssue[] = [
     ...validatePMEGPRules(dprData),
@@ -4126,7 +4170,7 @@ export function runAllValidations(dprData: Partial<DPRData>): ValidationResult {
 | `dialog:select-folder` | `{}` | `string \| null` | `IPC_FAILURE` |
 | `ai:chat` | `{ messages, dprData, config: { apiKey?, baseURL?, model? } }` | `{ success, response }` | `AI_FAILURE` |
 | `ai:test` | `{ config: { apiKey?, baseURL?, model? } }` | `{ success, message, latencyMs }` | `AI_FAILURE` |
-| `ai:suggest` | `{ fieldName, context, projectType }` | `{ success, suggestion }` | `AI_FAILURE` |
+| `ai:suggest` | `{ fieldName, context, projectType, config: { apiKey?, baseURL?, model? } }` | `{ success, suggestion, error? }` | `AI_FAILURE` |
 
 AI interview and autofill behavior is product-layer logic: ask required DPR questions, produce candidate structured `DPRData`, validate, calculate, and request user confirmation for critical changes. The IPC channel names above are implementation details and may be renamed if the implementation keeps the old `ai:ask` naming; the important rule is that all AI calls go through Electron IPC, never renderer fetch/API routes.
 
@@ -4430,10 +4474,10 @@ export class AIErrorHandler {
 
 // src/lib/ai/token-budget.ts
 export const TOKEN_BUDGET = {
-  MAX_CONTEXT_TOKENS: 8000,       // Total context window
+  CONTEXT_TOKEN_BUDGET: 8000,     // Total context window
   SYSTEM_PROMPT_BUDGET: 3000,     // Max tokens for system prompt
   CONVERSATION_BUDGET: 4000,      // Max tokens for conversation history
-  RESPONSE_BUDGET: 1000,          // Max tokens for AI response
+  RESPONSE_TOKEN_BUDGET: 1000,    // Max tokens for AI response
   DPR_DATA_COMPRESSED: 1500,      // Max tokens for compressed DPR data
   TRUNCATION_THRESHOLD: 0.9,      // Truncate at 90% of budget
 } as const;
