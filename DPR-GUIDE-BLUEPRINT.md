@@ -1,5 +1,10 @@
-# 🏗️ DPR GUIDE PRO — APPLICATION BLUEPRINT
-## For Kilo Code CLI AI Agent — Build Step-by-Step
+# PMEGP DPR Generator — Application Blueprint
+## DPRPACKAGE.xls-Backed Windows Desktop Application
+## Safe Implementation Plan for a Windows Desktop Application
+
+> **Blueprint status**: This document is a target implementation plan. It should describe the product, architecture, PMEGP/workbook rules, validation, export, build, and verification requirements only. Do not include local folder assumptions, terminal output, or machine-specific state.
+
+> **Product naming rule**: The working product name is **PMEGP DPR Generator**. Keep installer names, Electron `productName`, tray labels, report text, and documentation consistent with this name unless a formal rename is approved.
 
 ## Platform
 
@@ -7,21 +12,127 @@ Desktop-only Windows application.
 
 | Attribute | Value |
 |-----------|-------|
+| **Product / App Name** | PMEGP DPR Generator |
+| **Workbook Template** | `DPRPACKAGE.xls` — canonical PMEGP DPR workbook/template source of truth |
 | **Target OS** | Windows 10 / Windows 11 |
 | **Runtime** | Electron |
 | **UI Framework** | Next.js 16 |
 | **Language** | TypeScript |
 | **Styling** | Tailwind CSS 4 + shadcn/ui |
 | **State** | Zustand |
-| **Excel Export** | ExcelJS |
+| **Excel Export** | ExcelJS or workbook template engine, depending on verified `.xls` support |
 | **AI SDK** | OpenAI SDK (Electron main process only — user provides API key) |
 | **Installer** | NSIS (via electron-builder) |
-| **Output** | `DPR-Guide-Pro-Setup-{version}.exe` (NSIS installer) |
+| **Output** | `PMEGP-DPR-Generator-Setup-{version}.exe` (NSIS installer) |
 
 This application is desktop-only. No web deployment is supported.
 
+> **Important workbook boundary**: `DPRPACKAGE.xls` is the candidate template and primary export contract. The app is not the official KVIC workbook itself, and it must not imply that generated files are government-issued documents. The workbook should drive fields, formulas, validation, and export behavior only after workbook audit and official verification.
+
+> **Important product boundary**: This is an unofficial desktop tool for generating PMEGP DPR documents. It must not imply that it is KVIC, MSME, a bank, or an official government application.
+
 > **Style**: Windows 11 native app — frameless window, Mica/Acrylic effects, rounded corners  
-> **Theme**: Emerald green primary, dark/light mode, professional government scheme feel  
+> **Theme**: Emerald green primary, dark/light mode, professional desktop app style  
+
+---
+
+## 📐 DPRPACKAGE.xls Workbook Contract
+
+### Workbook-Centric Architecture
+
+The application must be designed around `DPRPACKAGE.xls`, not around a generic PMEGP chatbot or loosely related Excel export.
+
+Correct architecture:
+
+```text
+Workbook Audit
+    ↓
+Workbook Field Map
+    ↓
+DPRData Schema
+    ↓
+Validation Engine
+    ↓
+Calculation Engine / Formula Registry
+    ↓
+Workbook Mapper
+    ↓
+Excel Export / PDF Report
+```
+
+Rules:
+
+1. `DPRPACKAGE.xls` is the canonical export contract only after workbook audit and official verification.
+2. Every user-facing field must either:
+   - map to a verified workbook sheet/cell/range, or
+   - be marked as app-added metadata.
+3. Export should prefer loading/copying the workbook and populating verified cells/ranges.
+4. If `.xls` editing is not technically feasible, fallback export must be explicitly marked as **template-compatible generated workbook**, not the original workbook.
+5. Workbook formulas should be audited before implementation.
+6. Broken or ambiguous formulas must be documented and replaced only by canonical app-side calculations.
+7. The export layer must never invent calculations.
+
+### Workbook Audit Requirements
+
+Before implementing export logic, inspect the actual workbook and record:
+
+1. **Template metadata**
+   - File: `DPRPACKAGE.xls`
+   - Template version/hash
+   - Packaged runtime path
+   - Output extension policy: `.xls` vs `.xlsx`
+   - Whether formulas/formatting must be preserved exactly
+
+2. **Verified sheet inventory**
+   - Expected sheets to verify: `Application_form`, `DataSheet`, `DPR_print`, `Project_Report`, `DPR_FRONT`
+   - Add any additional sheets found in the actual workbook
+   - Do not claim sheet names are verified until the workbook is actually inspected
+
+3. **Field mapping table**
+   Every user-facing field must map to a workbook sheet/cell/range.
+
+   | App Field | Type | Workbook Sheet | Cell/Range | Notes |
+   |---|---|---|---|---|
+   | `applicant.name` | string | DataSheet / Project_Report | verify exact cell | Required for export fidelity |
+   | `applicant.gender` | enum | DataSheet | `M55` | Workbook code: 1=Male, 2=Female, 3=Transgender |
+   | `applicant.category` | enum | DataSheet | `M70` | Workbook category code |
+   | `project.location` | enum | DataSheet | `M64` | Workbook code: 1=Rural, 2=Urban |
+   | `project.sector` | enum | DataSheet | `M80` | Workbook code: 1=Manufacturing, 2=Service |
+   | `project.sponsoringAgency` | enum | DataSheet | `M59` | Workbook code: 1=KVIC, 2=KVIB, 3=DIC, 4=Coir Board |
+
+4. **Line-item row mapping**
+   - Building rows
+   - Machinery rows
+   - Other capital costs
+   - Working capital rows
+   - Sales/revenue rows
+   - Raw material rows
+   - Labor/wages rows
+   - Staff salary rows
+   - Other expenses
+
+5. **Export rule**
+   - Preferred export: load/copy `DPRPACKAGE.xls`, populate verified cells/ranges, preserve formulas/formatting where valid.
+   - Fallback export: generate a new workbook with equivalent sheets/fields only when `.xls` template editing is not technically feasible.
+   - Every exported field must be traceable to a workbook cell/range or documented as a new app-added field.
+
+### Workbook Formula Audit and Canonical Formula Policy
+
+For each formula, document the workbook source, intended rule, and app policy.
+
+| Formula | Workbook Cell | Current Template Formula | Intended Rule | App Policy |
+|---|---|---|---|---|
+| Subsidy rate | `G87` | verify from workbook | 15/25/35 logic based on gender/category/location | Canonical if verified |
+| Subsidy helper | `R59` | appears inconsistent with G87 | should match G87 | Override/document if broken |
+| Subsidy helper | `R60` | appears to use wrong refs | should use `M55/M70/M64` | Override/document if broken |
+| Coir check | `L25` | includes `M59` check | does not affect subsidy rate | Ignore for subsidy calculation |
+
+Policy:
+
+- Preserve valid `DPRPACKAGE.xls` formulas for export fidelity.
+- Use audited canonical formulas for known broken or ambiguous workbook formulas.
+- Document every deviation from the workbook formula.
+- Add tests for workbook load success, no unresolved `#REF!` in exported files, G87-equivalent subsidy logic, project-cost-limit handling, second-loan subsidy caps, and R59/R60 discrepancy handling.
 
 ---
 
@@ -29,7 +140,7 @@ This application is desktop-only. No web deployment is supported.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│  DPR GUIDE PRO — Windows Desktop Application                        │
+│  PMEGP DPR Generator — Windows Desktop Application                   │
 │                                                                      │
 │  ┌─ Electron Main Process ──────────────────────────────────────┐   │
 │  │  • Window management (frameless, custom titlebar)            │   │
@@ -43,7 +154,7 @@ This application is desktop-only. No web deployment is supported.
 │  │                                                              │   │
 │  │  ┌──────────┐  ┌──────────────────────────────────────────┐ │   │
 │  │  │          │  │ ╔═══ CUSTOM TITLEBAR ══════════════════╗ │ │   │
-│  │  │          │  │ ║ 🏠 DPR Guide Pro   ─ □ ✕  (Windows) ║ │ │   │
+│  │  │          │  │ ║ 🏠 PMEGP DPR Generator   ─ □ ✕  (Windows) ║ │ │   │
 │  │  │  LEFT    │  │ ╚═══════════════════════════════════════╝ │ │   │
 │  │  │  NAV     │  ├──────────────────────────────────────────┤ │   │
 │  │  │          │  │                                          │ │   │
@@ -51,7 +162,7 @@ This application is desktop-only. No web deployment is supported.
 │  │  │  • Form  │  │                                          │ │   │
 │  │  │  • AI    │  │  (Changes based on selected nav item)    │ │   │
 │  │  │  • Report│  │                                          │ │   │
-│  │  │  • Settng│  │                                          │ │   │
+│  │  │  • Settings│  │                                          │ │   │
 │  │  │          │  ├──────────────────────────────────────────┤ │   │
 │  │  │          │  │  AI Assistant Chat Panel (Collapsible)   │ │   │
 │  │  └──────────┘  └──────────────────────────────────────────┘ │   │
@@ -64,9 +175,120 @@ This application is desktop-only. No web deployment is supported.
 
 ---
 
-## 🇮🇳 PMEGP KNOWLEDGE BASE — Complete Scheme Reference (Updated 2026)
+## 🤖 AI INTERVIEW & AUTO-FILL FLOW — User Questions First, Calculations Second
 
-> **CRITICAL**: This section contains the COMPLETE PMEGP scheme knowledge from official KVIC sources, PMEGP Guidelines 2022 (revised Dec 2023), and 14+ live web sources. The AI assistant and app logic MUST reference this for ALL calculations, validations, suggestions, and user guidance. This is a FREE app for PMEGP applicants — the AI must be a TRUSTED ADVISOR, not just a form-filler.
+The AI assistant should not behave like a generic PMEGP advisor that only answers free-form questions. For DPR creation, the preferred flow is an interview-first autofill process:
+
+1. **AI asks missing required DPR/business questions first**.
+2. The user answers in natural language or through guided form prompts.
+3. The AI converts answers into structured `DPRData` fields.
+4. The app validates the structured data.
+5. The calculation engine computes subsidy, own contribution, bank loan, depreciation, P&L, DSCR, BEP, and workbook values.
+6. The workbook mapper fills `DPRPACKAGE.xls` sheets/cells.
+7. The user reviews autofilled fields and confirms before export.
+
+### Required AI Interview Topics
+
+The AI should ask for missing required information before autofilling or calculating. At minimum, cover:
+
+- **Project basics**
+  - Project name and activity description.
+  - Manufacturing or service/business sector.
+  - Rural or urban location.
+  - Sponsoring agency preference, if required.
+- **Applicant / promoter**
+  - Name, address, district, state, pin.
+  - Gender.
+  - Category: General, SC, ST, OBC, Women, Minority, Ex-Servicemen, PH/Transgender, NER/Hill/Border/Aspirational District, etc.
+  - Qualification and constitution/legal status if relevant.
+- **Loan and subsidy inputs**
+  - Project cost required.
+  - Bank loan amount required or target loan amount.
+  - Whether this is a first loan or second loan/upgradation.
+  - Whether the project is in NER/Hill/Border/Aspirational District, if applicable.
+- **Premises**
+  - Building owned, rented, or leased.
+  - Building cost, if owned/renovation is claimed.
+  - Rent/lease cost, if rented/leased.
+- **Capital expenditure**
+  - Machinery/equipment list with cost.
+  - Furniture/fixtures, preliminary/pre-operative expenses, contingency.
+  - Land cost must be excluded from PMEGP project cost.
+- **Working capital**
+  - Raw material cost.
+  - Consumables, packaging, utilities, transport, marketing, admin expenses.
+  - Required working capital period and stock assumptions.
+- **Labor and wages**
+  - Number of workers/staff.
+  - Wages/salary per person.
+  - Skilled/unskilled breakdown if available.
+- **Sales and revenue**
+  - Production/sales capacity.
+  - Unit selling price.
+  - Capacity utilization assumptions.
+  - Expected monthly/annual sales.
+- **Financial assumptions**
+  - Interest rate, loan tenure, repayment method, if not already fixed by PMEGP/workbook defaults.
+  - Depreciation and tax assumptions only if supported by verified workbook/rules.
+
+### AI-to-Form Autofill Rules
+
+- AI may extract or suggest values, but it is **not** the final calculation authority.
+- All numeric financial outputs must come from `pmegp-rules.ts`, `dpr-calculations.ts`, verified workbook formulas, or a future deterministic calculation engine.
+- AI-suggested changes to critical fields must be shown as draft values and require user confirmation before insertion.
+- Critical fields include project cost, loan amount, subsidy, own contribution, bank loan, machinery/building/raw material/labor/revenue assumptions, and any field used for PMEGP eligibility.
+- If required data is missing or ambiguous, the AI should ask a follow-up question instead of guessing.
+- If a user answer conflicts with PMEGP/workbook rules, the app should show a validation warning and let the user correct it.
+- The AI interview flow is product behavior; Electron IPC channel names such as `ai:ask`, `ai:chat`, `ai:test`, or `ai:suggest` are technical implementation details.
+
+### Recommended Deterministic Flow
+
+```text
+AI Interview
+  → Extract Candidate DPRData
+  → Validation Engine
+  → Calculation Engine
+  → Workbook Mapper
+  → Excel/PDF Export
+```
+
+This keeps the AI useful for user guidance, natural-language input, and field suggestions while keeping PMEGP calculations deterministic, auditable, and workbook-aligned.
+
+---
+
+## 🇮🇳 PMEGP KNOWLEDGE BASE — Rule, Validation, and Reference Content
+
+> **How to use this section**: This PMEGP knowledge base is a structured rule/reference input for the workbook-backed DPR generator. Keep only content that drives product behavior, validation, calculations, workbook mapping, export, or user-facing warnings. Do not include historical/objective/statistics/scheme-comparison/promotional material in the implementation blueprint.
+>
+> Rules used in calculations, validation, AI responses, or exported reports must be verified against the workbook and current official PMEGP/MSME/KVIC/CGTMSE sources before release.
+
+### AI Boundary Rules
+
+The AI assistant is a PMEGP/DPR support assistant, not a legal, financial, tax, banking, or government authority.
+
+Required boundaries:
+
+1. The AI must not claim to be KVIC, MSME, a bank, or a government official.
+2. The AI must not guarantee loan approval, subsidy approval, collateral-free status, or bank acceptance.
+3. The AI must not invent PMEGP rules that are not present in the workbook, validation engine, or verified official source.
+4. The AI must distinguish between:
+   - verified workbook-derived rules,
+   - verified official PMEGP rules,
+   - assumptions,
+   - optional guidance.
+5. The AI must warn users when official verification is pending.
+6. The AI must not provide legal, tax, CA-substitute, or investment advice.
+7. The AI must recommend verifying financial projections with a qualified professional before bank submission.
+8. The AI must not expose, echo, or log API keys.
+9. The AI must run through Electron IPC only.
+10. The AI must use structured DPR data and the PMEGP rules engine as context, not free-form hallucinated policy.
+11. The AI must not send full DPR data containing personal or financial information to third-party APIs unless the user explicitly consents.
+12. AI suggestions that could change critical legal/financial fields must require user confirmation before insertion.
+> - **Workbook-derived rule data**: subsidy rates, own contribution, category/location codes, EDP thresholds, depreciation defaults, and formula metadata.
+> - **Validation rules**: eligibility checks, land-cost checks, negative-list checks, cost-limit warnings, and document checklist rules.
+> - **UI guidance metadata**: user-facing explanations, warnings, and help text directly tied to validation or export.
+>
+> **Official verification required before release**: PMEGP rules can change. Any policy claim used in calculations, validation, or user guidance must be checked against the latest KVIC/MSME/KVIC e-portal/CGTMSE notifications before shipping. Mark unverified claims with `Official verification pending`.
 
 ---
 
@@ -75,47 +297,12 @@ This application is desktop-only. No web deployment is supported.
 | Attribute | Detail |
 |-----------|--------|
 | **Full Name** | Prime Minister's Employment Generation Programme |
-| **Launched** | 15 August 2008 (from the Red Fort by PM) |
-| **Ministry** | Ministry of Micro, Small and Medium Enterprises (MoMSME) |
-| **Nodal Agency** | KVIC (Khadi and Village Industries Commission), Mumbai |
 | **Type** | Central Sector Scheme (100% Govt of India funded, credit-linked subsidy) |
 | **Nature** | NOT a direct loan — it's a SUBSIDY on a bank loan |
-| **Current Period** | FY 2021-22 to FY 2025-26 (5 years) |
-| **Budget Allocation** | ₹13,500 crore for 2021-26 period |
-| **Target** | Generate sustainable employment in rural & urban areas |
 | **Sector** | Non-farm sector — micro enterprises only |
 | **Official Portal** | kviconline.gov.in/pmegpeportal |
-| **JanSamarth Portal** | jansamarth.in |
-| **KVIC EDP Training** | training.kvic.gov.in |
-| **Online EDP** | udyami.org.in |
-| **CGTMSE Portal** | cgtmse.in |
 
-**🔑 KEY INSIGHT FOR AI**: PMEGP is NOT a direct loan. The bank lends money, and the government gives a subsidy (called "Margin Money") that covers 15% to 35% of project cost. This Margin Money is routed through the bank, held in the borrower's account/TDR during a 3-year lock-in, then adjusted (written off) against the loan after physical verification. During lock-in, the borrower's liability is the FULL sanctioned amount. The AI MUST explain this clearly to every user.
-
----
-
-### 2. History & Evolution
-
-| Period | Event |
-|--------|-------|
-| **Pre-2008** | Two separate schemes: REGP (Rural Employment Generation Programme) + PMRY (Pradhan Mantri Rozgar Yojana) |
-| **2008** | PMEGP launched by merging REGP + PMRY |
-| **2008-2012** | Initial phase — limits: Manufacturing ₹25 Lakh, Service ₹10 Lakh |
-| **2012-2022** | Extended. Limits increased: Manufacturing ₹50 Lakh, Service ₹20 Lakh |
-| **2021-22** | Continued for another 5 years (FY 2021-22 to FY 2025-26) |
-| **Dec 2023** | Revised guidelines — 2nd loan, transgender category, aspirational districts, geo-tagging |
-| **2024-25** | Transgender added as Special Category, Aspirational Districts added |
-| **2025-26** | Current operational year. Subsidy rates unchanged at 15%-35% |
-
----
-
-### 3. Objectives
-
-1. Generate continuous and sustainable employment in Rural and Urban areas
-2. Facilitate participation of financial institutions for higher credit flow to micro sector
-3. Promote self-employment among traditional artisans, unemployed youth
-4. Set up new micro-enterprises in non-farm sector
-5. Provide backward and forward linkages — awareness, training, exhibitions, EDP
+**🔑 KEY INSIGHT FOR AI**: PMEGP is NOT a direct loan. The bank lends money, and the government gives a subsidy (called "Margin Money") that covers 15% to 35% of project cost. This Margin Money is routed through the bank, held in the borrower's account/TDR during a 3-year lock-in, then adjusted (written off) against the loan after physical verification. During lock-in, the borrower's liability is the FULL sanctioned amount. The AI should explain this clearly, while noting that final bank/IA decisions depend on verified rules and documents.
 
 ---
 
@@ -142,17 +329,7 @@ This application is desktop-only. No web deployment is supported.
 - ❌ One applicant = one project only (cannot submit multiple projects)
 - ❌ **Family definition**: Self and Spouse — only ONE project per family
 
-#### 4.3 Age & Education
-
-| Parameter | Rule |
-|-----------|------|
-| **Minimum Age** | 18 years (no upper limit) |
-| **Income Ceiling** | No income ceiling |
-| **Education (Mfg >₹10L)** | 8th Standard Pass mandatory |
-| **Education (Svc >₹5L)** | 8th Standard Pass mandatory |
-| **Education (≤₹10L Mfg / ≤₹5L Svc)** | No minimum qualification |
-
-#### 4.4 Special Category Beneficiaries (Enhanced Subsidy)
+#### 4.3 Special Category Beneficiaries (Enhanced Subsidy)
 
 | # | Category | Code in DPR |
 |---|----------|-------------|
@@ -166,7 +343,7 @@ This application is desktop-only. No web deployment is supported.
 | 8 | **Aspirational Districts** | M70=8 |
 | 9 | **General** (General Category — MALE ONLY) | M70=9 |
 
-> 🔴 **CRITICAL GOTCHA — Women = Special Category ALWAYS!** Women are classified as Special Category regardless of their social category (SC/ST/OBC/General). In the Excel template, if Gender=Female (M55=2), the applicant automatically gets Special Category subsidy rates even if M70=9 (General). **Transgender (M55=3) also gets Special Category rates.** The AI MUST proactively tell users: "As a woman, you automatically qualify for Special Category subsidy — even if your social category is General!"
+> 🔴 **CRITICAL RULE — Women = Special Category ALWAYS!** Women are classified as Special Category regardless of their social category (SC/ST/OBC/General). In the Excel template, if Gender=Female (M55=2), the applicant automatically gets Special Category subsidy rates even if M70=9 (General). **Transgender (M55=3) also gets Special Category rates.** The AI should proactively explain this only when the user's entered gender/category data indicates it applies, and should advise verifying with the latest official/workbook rule.
 
 ---
 
@@ -188,7 +365,7 @@ This application is desktop-only. No web deployment is supported.
 
 #### 5.3 If Project Cost Exceeds Limits
 
-> If the total project cost exceeds ₹50 Lakh (manufacturing) or ₹20 Lakh (service), the **balance credit can be availed from banks WITHOUT any Government subsidy**. Only the portion up to the limit gets subsidy. The AI MUST warn users about this.
+> If the total project cost exceeds ₹50 Lakh (manufacturing) or ₹20 Lakh (service), the balance credit may be availed from banks without Government subsidy, while the portion up to the limit may receive subsidy. Verify this rule from the current official/workbook source before using it as a hard validation rule. The AI should warn users that subsidy applies only to the verified eligible portion.
 
 #### 5.4 Components of Project Cost
 
@@ -204,7 +381,7 @@ This application is desktop-only. No web deployment is supported.
 | General Male | 10% of Project Cost | 90% of Project Cost |
 | Special Category | 5% of Project Cost | 95% of Project Cost |
 
-> ⚠️ **Cost of LAND CANNOT be included** in the project cost (FAQ #2, KVIC). This is a COMMON MISTAKE — the AI must flag this!
+> ⚠️ **Cost of LAND CANNOT be included** in the project cost (FAQ #2, KVIC). This is a common mistake — the validation engine should flag this, and the AI should explain it as a rule only after workbook/official verification.
 
 **Example**: If Building = ₹10L + Machinery = ₹25L + Working Capital = ₹15L, then **Project Cost = ₹50L**. Own Contribution (5%) = ₹2.5L. Bank Finance (95%) = ₹47.5L. Own Contribution is DERIVED from project cost, NOT added to it.
 
@@ -237,7 +414,7 @@ IF Gender = Male (M55=1) AND Category = General (M70=9): 10%
 ELSE: 5%
 ```
 
-#### 6.4 Subsidy Calculation Examples — THE AI MUST SHOW THESE!
+### 6.4 Subsidy Calculation Examples — Test/Explanation Cases
 
 **Example 1: General Male, Urban, Manufacturing**
 - Project Cost: ₹25,00,000
@@ -267,7 +444,7 @@ ELSE: 5%
 - Bank Loan (Sanctioned): ₹38,00,000 (95%)
 - **Net Liability After Lock-In: ₹24,00,000** (after 3-yr lock-in + physical verification)
 
-#### 6.5 Maximum Subsidy Amounts (Practical Caps) — AI MUST WARN ABOUT THESE
+#### 6.5 Maximum Subsidy Amounts (Practical Caps) — Validation/Warning Cases
 
 | Scenario | Project Cost | Subsidy % | Max Subsidy |
 |----------|-------------|-----------|-------------|
@@ -306,7 +483,7 @@ Only AFTER 3-year lock-in + physical verification + geo-tagging:
   → Borrower repays only ₹30,00,000
 ```
 
-**🔑 AI MUST EXPLAIN**: "You pay ₹2.5L from your pocket. Bank sanctions ₹47.5L. ₹17.5L of that is government Margin Money, held by the bank in a TDR/lock-in for 3 years. During lock-in, your liability is the full ₹47.5L. After 3 years + physical verification, the Margin Money is adjusted and written off. Your net liability becomes ₹30L. This is how PMEGP makes your project affordable!"
+**🔑 AI GUIDANCE**: "You pay ₹2.5L from your pocket. Bank sanctions ₹47.5L. ₹17.5L of that is government Margin Money, held by the bank in a TDR/lock-in for 3 years. During lock-in, your liability is the full ₹47.5L. After 3 years + physical verification, the Margin Money is adjusted and written off. Your net liability becomes ₹30L. This is how PMEGP can make the project more affordable, subject to official approval."
 
 ---
 
@@ -315,10 +492,8 @@ Only AFTER 3-year lock-in + physical verification + geo-tagging:
 #### 8.1 Interest Rate
 - **Not fixed by PMEGP** — charged at **prevailing bank rates**
 - **Typical range: 8% to 14%** depending on bank, category, and scheme
-- **SBI, Bank of Baroda, PSU banks**: usually 8-10% (lower rates)
-- **Private banks** (HDFC, ICICI): usually 10-14%
-- Some banks offer **concessional rates** for PMEGP beneficiaries
-- **AI should suggest**: "For best rates, approach SBI or your nearest PSU bank"
+- The app must store the user-selected interest rate as an input/default assumption.
+- AI may explain interest-rate ranges only as examples and must not recommend a specific bank or guarantee lower rates.
 
 #### 8.2 Repayment Schedule
 
@@ -376,11 +551,11 @@ Example: ₹30,00,000 loan at 11% for 7 years:
 | **Auto rickshaws** | ✅ A&N Islands and NER only (CNG only, Chief Secretary approval required) |
 | **House boats / Tourist boats** | ✅ A&N Islands and J&K only |
 
-> 🔴 **AI MUST CHECK**: When user enters a business name/description, AI should check against this Negative List and warn immediately with the reason.
+> 🔴 **AI/Validation NOTE**: When user enters a business name/description, the AI or validation engine should check against this Negative List and warn immediately with the reason, but should not block export unless the activity is confirmed from the official/current negative list.
 
 ---
 
-### 10. Common Mistakes & Rejection Reasons — AI MUST PROACTIVELY WARN
+### 10. Common Mistakes & Rejection Reasons — Validation Warnings
 
 | # | Mistake | How to Avoid | AI Action |
 |---|---------|-------------|-----------|
@@ -397,7 +572,7 @@ Example: ₹30,00,000 loan at 11% for 7 years:
 
 ---
 
-### 11. Collateral & CGTMSE — KNOW YOUR RIGHTS!
+### 11. Collateral & CGTMSE — Validation/Guidance Rule
 
 #### 11.1 Collateral-Free Loans
 
@@ -415,7 +590,7 @@ Example: ₹30,00,000 loan at 11% for 7 years:
 - The guarantee fee is paid by the **lending bank** (not you!)
 - **RBI has mandated** that banks must NOT ask for collateral for loans up to ₹10 Lakh
 
-> 🔴 **AI MUST TELL USERS**: "If your project is up to ₹10 Lakh, banks CANNOT ask for collateral. For projects up to ₹2 Crore, INSIST on CGTMSE coverage — don't let the bank force you to give property as collateral!"
+> 🔴 **AI/Validation NOTE**: If your project is up to ₹10 Lakh, PMEGP/RBI/CGTMSE guidance generally supports collateral-free loans. For projects up to ₹2 Crore, CGTMSE coverage may be available. The AI should phrase this as general guidance and recommend verifying current bank/KVIC/CGTMSE rules before submission.
 
 ---
 
@@ -426,7 +601,7 @@ Example: ₹30,00,000 loan at 11% for 7 years:
 - During lock-in, the subsidy amount is held as a deposit — you CANNOT withdraw it
 - After lock-in + physical verification, subsidy is adjusted (written off) against loan
 
-#### 12.2 Subsidy Adjustment Process (7 Steps — AI Must Walk Users Through This)
+#### 12.2 Subsidy Adjustment Process — Validation/Guidance Rule
 
 ```
 Step 1: Bank sanctions loan (90% or 95% of project cost)
@@ -501,22 +676,17 @@ Step 7: After 3 years + successful physical verification + geo-tagging:
 
 ---
 
-### 15. Application Process — 12 Steps (AI Must Guide Users Through This)
+### 15. Application Process — Implementation-Relevant Flow
 
-1. **Visit PMEGP e-Portal**: kviconline.gov.in/pmegpeportal
-2. **Check Eligibility**: Use the eligibility checker
-3. **Aadhaar Authentication**: Validate Aadhaar details online
-4. **Register**: Generate User ID and Password
-5. **Fill Application Form**: Select "Online Application for Individual" or "Non-Individual"
-6. **Enter Details**: Personal info, project details, cost, finance, sales, expenses
-7. **Upload Documents**: Photo, certificates, project report
-8. **Submit**: Application goes to concerned implementing agency (KVIC/KVIB/DIC)
-9. **Track**: Use e-Tracking system (FIFS — First In First Served)
-10. **Bank Forwarding**: If approved by IA, forwarded to bank
-11. **Bank Sanction**: Bank processes and sanctions loan
-12. **Disbursement**: Bank disburses loan + subsidy claim filed by bank
+The app should support the user-facing workflow only where it affects DPR creation and export:
 
-**Alternative Portal**: JanSamarth (jansamarth.in) — also provides eligibility check and subsidy calculator
+1. User checks eligibility.
+2. User enters applicant, project, cost, finance, sales, and expense details.
+3. App validates PMEGP/workbook rules.
+4. App calculates subsidy, own contribution, bank finance, P&L, ratios, and workbook values.
+5. User exports DPR and uploads/submits it through the official PMEGP e-Portal or bank/IA process.
+
+External portal navigation, tracking, and bank-sanction steps are reference guidance only and should not be treated as app functionality unless implemented as a separate Phase 2 guide.
 
 ---
 
@@ -530,7 +700,7 @@ Step 7: After 3 years + successful physical verification + geo-tagging:
 | **Educational Qualification Certificate** | ✅ If project > ₹10L (Mfg) / ₹5L (Svc) | Conditional |
 | **Caste Certificate** | ✅ For SC/ST/OBC claims | If claiming category |
 | **Special Category Certificate** | ✅ For PH/Ex-Serviceman/Minority | If claiming category |
-| **Project Report / DPR** | ✅ Mandatory | Always (THIS APP HELPS CREATE THIS!) |
+| **Project Report / DPR** | ✅ Mandatory | Always |
 | **Address Proof** | ✅ Mandatory | Always |
 | **Bank Account Details** | ✅ Mandatory | Always |
 | **Rural/Urban Certificate** | ✅ From revenue authority | Always |
@@ -552,13 +722,13 @@ Step 7: After 3 years + successful physical verification + geo-tagging:
 
 #### 17.2 Financial Agencies (Banks — where you get the loan)
 
-- All **Public Sector Banks** (SBI, PNB, Bank of Baroda, etc.) — **BEST RATES**
-- **Regional Rural Banks (RRBs)**
-- **Co-operative Banks** (RBI regulated)
-- **SIDBI**
-- **Private Scheduled Commercial Banks** (HDFC, ICICI, Axis, etc.) — approved by SLMC
+- Public Sector Banks
+- Regional Rural Banks (RRBs)
+- Co-operative Banks (RBI regulated)
+- SIDBI
+- Private Scheduled Commercial Banks approved by SLMC
 
-> **AI SHOULD SUGGEST**: "For best interest rates, approach SBI or your nearest PSU bank. They typically offer 8-10% for PMEGP loans."
+The app must not claim that any bank offers the “best” PMEGP rate. Interest-rate guidance should be stored as a user-configurable assumption or general range, with official/bank verification required before final submission.
 
 ---
 
@@ -577,44 +747,13 @@ Step 7: After 3 years + successful physical verification + geo-tagging:
 
 ---
 
-### 19. PMEGP vs Other Schemes — AI Must Recommend Best Scheme!
+### 19. Scheme Comparison — Reference Only
 
-#### 19.1 PMEGP vs MUDRA (PMMY)
-
-| Feature | PMEGP | MUDRA (PMMY) |
-|---------|-------|--------------|
-| **Type** | Subsidy on bank loan | Direct bank loan (NO subsidy) |
-| **Max Loan** | ₹50L (Mfg) / ₹20L (Svc) | ₹10 Lakh (Tarun) |
-| **Subsidy** | 15%-35% | **None** |
-| **Own Contribution** | 5%-10% | Not mandatory |
-| **Collateral** | Free up to ₹10L (CGTMSE up to ₹2Cr) | Free up to ₹10L |
-| **New/Existing** | New units only | New + Existing |
-| **EDP Training** | Mandatory (for >₹2L) | Not mandatory |
-| **Processing Time** | Longer (IA + bank) | Faster (bank-only) |
-| **Best For** | New businesses needing SUBSIDY | Small loans up to ₹10L, fast |
-
-#### 19.2 PMEGP vs Stand-Up India
-
-| Feature | PMEGP | Stand-Up India |
-|---------|-------|----------------|
-| **Target** | All categories | SC/ST + Women entrepreneurs |
-| **Max Loan** | ₹50L | ₹1 Crore |
-| **Subsidy** | 15%-35% | No subsidy, but lower interest |
-| **Repayment** | 3-7 years | Up to 7 years |
-
-#### 19.3 Which Scheme Should You Choose? (AI Decision Guide)
-
-| Your Situation | Best Scheme |
-|---------------|-------------|
-| New business, need SUBSIDY | **PMEGP** ✅ |
-| Small loan up to ₹10L, fast processing | **MUDRA** |
-| SC/ST/Woman, need ₹10L-1Cr | **Stand-Up India** |
-| Existing business, need collateral-free loan | **CGTMSE** |
-| New business + MAXIMUM government support | **PMEGP** ✅ (best overall) |
+The app should not implement scheme comparison as a core DPR generation feature. If added later, it should be a separate optional guide view that clearly states scheme terms require official verification. Do not use scheme comparison to override PMEGP eligibility, subsidy, or workbook calculations.
 
 ---
 
-### 20. Key Changes in Revised Guidelines 2023 — MUST USE THESE RULES
+### 20. Key Changes in Revised Guidelines 2023 — Verify Before Hardcoding
 
 | Change | Old Rule | New Rule (2023+) |
 |--------|----------|----------|
@@ -634,29 +773,7 @@ Step 7: After 3 years + successful physical verification + geo-tagging:
 
 ---
 
-### 21. Scheme Performance Statistics — Build User Confidence!
-
-| Metric | Cumulative Figure (Since 2008) |
-|--------|-------------------------------|
-| **Margin Money Released** | ₹20,000+ Crore |
-| **Projects Supported** | 8,00,000+ |
-| **Employment Generated** | 70,00,000+ (70 Lakh+) |
-
-**Year-Wise Performance:**
-
-| Financial Year | Margin Money (₹ Cr) | Projects | Employment |
-|---------------|---------------------|----------|------------|
-| 2021-22 | ~2,800 | 1,03,000+ | 7,50,000+ (record!) |
-| 2022-23 | ~3,000 | 90,000+ | 7,00,000+ |
-| 2023-24 | ~3,200 | 95,000+ | 7,20,000+ |
-| 2024-25 | ~2,500 (RE) | 75,000+ | 5,50,000+ |
-| 2025-26 | Current year | In progress | In progress |
-
-> **AI SHOULD TELL USERS**: "70 Lakh+ people have already benefited from PMEGP since 2008, with over ₹20,000 Crore in subsidies released. This is a proven, well-funded government scheme!"
-
----
-
-### 22. Financial Model Architecture — For App Calculations
+### 21. Financial Model Architecture — For App Calculations
 
 #### 22.1 Capacity Utilization (5-Year Projection)
 
@@ -776,24 +893,32 @@ The app MUST provide its own input fields for: father's name, phone, email, stat
 
 #### 25.1 Cell L25 vs G87 Subsidy Formula
 
-Cell L25 has a M59 (Coir Board) check that doesn't actually affect the subsidy rate. The **real** formula is in G87:
-```
+The following subsidy-cell notes are provisional until the workbook is audited.
+
+Cell L25 appears to have a M59 (Coir Board) check that does not directly affect the subsidy rate. The suspected real subsidy formula is in G87:
+
+```excel
 =IF(M64=2, IF(AND(M55=1,M70=9), 15%, 25%), IF(AND(M55=1,M70=9), 25%, 35%))
 ```
-The app should use G87 logic, not L25.
+
+The app should use the audited G87-equivalent logic, not an unverified helper cell.
 
 #### 25.2 R57:R60 Reference Tables
 
-| Cell | Formula | Meaning |
-|------|---------|---------|
-| R57 | `=IF(M64=2,IF(AND(M55=1,M70=9),15,25),IF(AND(M55=1,M70=9),25,35))` | Full subsidy rate |
-| R58 | `=IF(AND(M55=1,M70=9,M64=2),15,25)` | Urban General Male = 15%, else 25% |
-| R59 | `=IF(AND(M55=1,M64=1,M70=9),35,25)` | **BUG in Excel: Returns 35% for Rural General Male, but should be 25%. The values are SWAPPED — correct formula should be `=IF(AND(M55=1,M64=1,M70=9),25,35)`. Our app MUST use the correct G87 formula, NOT R59.** |
-| R60 | `=IF(AND(M57=1,M72=9,M66=2),15,0)` | **Likely error** — uses M57/M72/M66 instead of M55/M70/M64 |
+These cells must be verified from the actual workbook before being treated as canonical.
+
+| Cell | Suspected Formula | Meaning | App Policy |
+|------|---------|---------|------------|
+| R57 | `=IF(M64=2,IF(AND(M55=1,M70=9),15,25),IF(AND(M55=1,M70=9),25,35))` | Full subsidy rate | Use only if verified |
+| R58 | `=IF(AND(M55=1,M70=9,M64=2),15,25)` | Urban General Male = 15%, else 25% | Use only if verified |
+| R59 | `=IF(AND(M55=1,M64=1,M70=9),35,25)` | Suspected bug: may return 35% for Rural General Male | Override/document if workbook audit confirms mismatch |
+| R60 | `=IF(AND(M57=1,M72=9,M66=2),15,0)` | Suspected wrong refs | Override/document if workbook audit confirms mismatch |
 
 ---
 
 ### 26. Official Sources & References — App Should Link to These
+
+> Treat these sources as candidates for verification. Every policy claim used in calculation, validation, AI responses, or exported reports should be checked against the current official source and recorded in a verification register.
 
 #### Government Portals
 | Source | URL |
@@ -817,70 +942,59 @@ The app should use G87 logic, not L25.
 
 ---
 
-## 🆕 ADDITIONAL FEATURES FROM DEEP RESEARCH — New Views & Components
+## 🆕 FEATURE PRIORITIZATION — Core, Phase 2, and Optional PMEGP Features
 
-> These features are DIRECTLY inspired by the PMEGP deep research. They transform the app from a simple form-filler into a TRUSTED ADVISOR for PMEGP applicants.
+> Feature priority should be driven by workbook fidelity, deterministic PMEGP calculations, validation, and export correctness. AI guidance and educational views must not override verified workbook or rule-engine results.
 
-### Feature 1: Scheme Comparison Tool (`scheme-comparison-view.tsx`)
-- Interactive comparison: PMEGP vs MUDRA vs Stand-Up India vs CGTMSE
-- Decision tree: "New business? → PMEGP. Quick ₹10L? → MUDRA. SC/ST/Woman ₹10L-1Cr? → Stand-Up India"
-- Side-by-side comparison tables with subsidy amounts, max loan, processing time
-- "Which scheme is best for YOU?" quiz (3 questions → recommendation)
-- Add to sidebar navigation as "📋 Schemes" item
+### Core / MVP Features
 
-### Feature 2: Rejection Risk Checker (`rejection-checker-view.tsx`)
-- Real-time validation against 10 Common Mistakes (from Section 10 above)
-- Risk Score: Low 🟢 / Medium 🟡 / High 🔴 based on current form data
-- Warnings: land cost included, project cost exceeds limit, negative list activity, wrong category
-- Checklist: "Before you submit, verify these 10 things"
-- Add to sidebar navigation as "🛡️ Check" item
+These are required for a correct workbook-backed DPR generator:
 
-### Feature 3: Application Journey Guide (`application-guide-view.tsx`)
-- 12-step visual guide (from Section 15 above) with progress bar
-- Each step is checkable with status: ✅ Done / 🔄 In Progress / ⬜ Not Started
-- Links to official portals (kviconline.gov.in, jansamarth.in)
-- Document checklist per step (auto-generated from user's category)
-- Timeline estimate for each step
-- Add to sidebar navigation as "🗺️ Journey" item
+1. DPR form data model
+2. Workbook field mapping
+3. Validation engine
+4. Subsidy / own contribution / 2nd-loan calculation engine
+5. Excel export
+6. PDF report export
+7. Save/load DPR data
+8. AI assistant with strict PMEGP boundaries and interview-first autofill
 
-### Feature 4: Subsidy Calculator with Live Preview (`subsidy-calculator-view.tsx`)
-- Animated subsidy breakdown based on 4 examples (from Section 6.4 above)
-- Visual flow: "You pay ₹2.5L → Bank gives ₹47.5L → Govt writes off ₹17.5L after 3 years → You repay only ₹30L"
-- Slider inputs: Project Cost, Gender, Category, Location → instant subsidy preview
-- Maximum subsidy cap warnings (from Section 6.5 above)
-- Side-by-side comparison: "What if you were General Male vs SC Male?" 
-- Add to sidebar navigation as "💰 Calculator" item
+### Phase 2 Useful Features
 
-### Feature 5: EDP Training Finder (`edp-training-view.tsx`)
-- Training duration auto-calculated based on project cost
-- Link to 582+ RSETI centers (training.kvic.gov.in)
-- Link to online EDP at udyami.org.in
-- Reminder: "EDP not mandatory for projects up to ₹2 Lakh"
-- Reminder: "Complete EDP BEFORE Margin Money claim"
-- FREE of cost badge
-- Embed in dpr-form-view as a card/section
+These improve usability but should be implemented after the core workbook/export path works:
 
-### Updated Sidebar Navigation
+1. Subsidy calculator with live preview
+2. Rejection risk checker
+3. Application workflow guidance (reference only)
+4. EDP training guidance
+
+### Recommended MVP Sidebar
+
 ```
 • 🏠 Home
-• 📝 Form          (DPR form filling)
-• 🤖 AI            (AI assistant chat)
-• 💰 Calculator     (NEW — subsidy calculator)
-• 🛡️ Check         (NEW — rejection risk checker)
-• 📋 Schemes        (NEW — scheme comparison)
-• 🗺️ Journey        (NEW — application guide)
-• 📊 Report         (financial reports)
-• ⚙️ Settings       (AI config, etc.)
+• 📝 DPR Form
+• 📊 Report
+• 🤖 AI Assistant
+• ⚙️ Settings
+```
+
+### Recommended Phase 2 Sidebar
+
+```
+• 💰 Subsidy Calculator
+• 🛡️ Rejection Check
+• 🗺️ Application Guide
 ```
 
 ### Updated File Structure Additions
+
 ```
 src/components/views/
-├── scheme-comparison-view.tsx    # NEW
-├── rejection-checker-view.tsx    # NEW
-├── application-guide-view.tsx    # NEW
-├── subsidy-calculator-view.tsx   # NEW
-└── edp-training-view.tsx         # NEW
+├── rejection-checker-view.tsx    # Phase 2
+├── application-guide-view.tsx    # Phase 2 / reference workflow guidance
+├── subsidy-calculator-view.tsx   # Phase 2
+├── edp-training-view.tsx         # Phase 2
+└── ai-interview-view.tsx         # Phase 2 / optional guided AI interview and autofill review
 ```
 
 ---
@@ -888,7 +1002,7 @@ src/components/views/
 ## 🗂️ COMPLETE FILE STRUCTURE
 
 ```
-my-project/
+<project-root>/
 ├── electron/                              # ELECTRON MAIN PROCESS
 │   ├── main.ts                            # Electron main entry
 │   ├── preload.ts                         # Preload script (IPC bridge)
@@ -907,16 +1021,16 @@ my-project/
 │   │   ├── app-shell.tsx                  # Main layout wrapper
 │   │   ├── titlebar.tsx                   # ⭐ CUSTOM WINDOWS TITLEBAR
 │   │   ├── sidebar.tsx                    # Left navigation
-│   │   ├── ai-chat-panel.tsx             # Collapsible AI chat
+│   │   ├── ai-chat-panel.tsx             # Collapsible AI chat and draft autofill review
+│   │   ├── ai-interview-panel.tsx        # Proposed guided AI interview panel for missing DPR questions
 │   │   ├── views/
 │   │   │   ├── dashboard-view.tsx
 │   │   │   ├── dpr-form-view.tsx
 │   │   │   ├── ai-assistant-view.tsx
 │   │   │   ├── report-view.tsx
 │   │   │   ├── settings-view.tsx
-│   │   │   ├── scheme-comparison-view.tsx    # NEW — PMEGP vs MUDRA vs Stand-Up India
 │   │   │   ├── rejection-checker-view.tsx    # NEW — 10-point rejection risk checker
-│   │   │   ├── application-guide-view.tsx    # NEW — 12-step application journey
+│   │   │   ├── application-guide-view.tsx    # NEW — implementation-relevant workflow guide
 │   │   │   ├── subsidy-calculator-view.tsx   # NEW — live subsidy calculator
 │   │   │   └── edp-training-view.tsx         # NEW — EDP training finder
 │   │   ├── form-sections/
@@ -949,6 +1063,10 @@ my-project/
 │       ├── dpr-calculations.ts            # ⭐ Financial calculation engine — ONLY place calculations happen
 │       ├── dpr-types.ts                   # Type definitions + DPR schema versioning
 │       ├── ai-system-prompt.ts            # AI system prompt (uses prompt-builder.ts)
+│       ├── ai-interview/                  # ⭐ AI interview and autofill architecture
+│       │   ├── interview-schema.ts        # Required-question definitions for AI autofill
+│       │   ├── extractor.ts               # Converts AI/user answers into candidate DPRData
+│       │   └── confirmation.ts            # Draft-value review and critical-field confirmation rules
 │       ├── format-currency.ts             # ₹ Indian formatting
 │       ├── report-generator.ts            # ⭐ HTML report generation for PDF export (DPRData → print-ready HTML)
 │       ├── example-data.ts                # ⭐ Pre-filled example DPR data for new users (Manufacturing, Rural, SC Male)
@@ -972,13 +1090,12 @@ my-project/
 ├── build/                                 # ELECTRON BUILDER ASSETS
 │   ├── icon.ico                           # ⭐ Windows app icon (256x256)
 │   ├── installer-banner.bmp              # NSIS installer banner
-│   ├── installer-sidebar.bmp             # NSIS installer sidebar
-│   └── entitlements.mac.plist            # (Mac only, not needed)
+│   └── installer-sidebar.bmp             # NSIS installer sidebar
 │
-├── public/
-│   ├── dpr-logo.png                       # ✅ ALREADY GENERATED
-│   ├── dpr-hero.png                       # ✅ ALREADY GENERATED
-│   └── dpr-icons.png                      # ✅ ALREADY GENERATED
+├── public/                                # Optional renderer static assets
+│   ├── dpr-logo.png                       # Create if used by the app
+│   ├── dpr-hero.png                       # Create if used by the app
+│   └── dpr-icons.png                      # Create if used by the app
 │
 ├── electron-builder.yml                   # ⭐ Electron Builder config
 ├── next.config.ts                         # Modified for Electron
@@ -990,29 +1107,35 @@ my-project/
 
 ## 📦 PHASE 0: ELECTRON SETUP & CONFIGURATION (DO THIS FIRST!)
 
-### Step 0.1: Install Electron Dependencies
+### Step 0.1: Electron Dependency Plan
 
-```bash
-bun add -d electron electron-builder concurrently wait-on tsup
-bun add exceljs           # For Excel file generation/export
-bun add openai            # ⭐ OpenAI SDK — used in Electron main process ONLY (ipc-handlers.ts)
-# NOTE: Do NOT install electron-next (unmaintained, doesn't support Next.js 16)
-# NOTE: Do NOT install @electron/remote (unnecessary — we use IPC instead)
-```
+> **Blueprint note**: This section lists required dependencies only. Do not include machine-specific terminal commands in the product blueprint.
+
+Required dependencies:
+
+- `electron`
+- `electron-builder`
+- `concurrently`
+- `wait-on`
+- `tsup`
+- `exceljs`
+- `openai`
+
+Do not install `electron-next` or `@electron/remote` unless a future architecture review explicitly requires them.
 
 ### Step 0.2: Update `package.json`
 
-Add these scripts and build configuration:
+Add these scripts and build configuration. Use `npm` consistently, or replace it consistently with another package manager if the project standard changes.
 
 ```json
 {
-  "main": "dist-electron/main.js",
+  "main": "dist-electron/main.cjs",
   "scripts": {
     "dev": "next dev -p 3000",
     "build:electron": "tsup",
-    "dev:electron": "concurrently \"bun run dev\" \"bun run build:electron --watch\" \"wait-on http://localhost:3000 && electron .\"",
-    "build": "next build && bun run build:electron && electron-builder",
-    "build:win": "next build && bun run build:electron && electron-builder --win",
+    "dev:electron": "concurrently \"npm run dev\" \"npm run build:electron -- --watch\" \"wait-on http://127.0.0.1:3000 && electron .\"",
+    "build": "next build && npm run build:electron && electron-builder",
+    "build:win": "next build && npm run build:electron && electron-builder --win",
     "lint": "next lint"
   },
   // NOTE: Build configuration is in electron-builder.yml (do NOT duplicate here)
@@ -1022,10 +1145,10 @@ Add these scripts and build configuration:
 
 ### Step 0.2b: Create `tsup.config.ts` — Electron TypeScript Build
 
-This compiles all `electron/*.ts` files into `dist-electron/*.js` so Electron can load them. Without this step, the `.exe` will NOT build because Electron cannot run TypeScript directly.
+This compiles all `electron/*.ts` files into `dist-electron/*.cjs` so Electron can load them. Without this step, the `.exe` will NOT build because Electron cannot run TypeScript directly.
 
 ```typescript
-// tsup.config.ts — Compiles electron/*.ts → dist-electron/*.js
+// tsup.config.ts — Compiles electron/*.ts → dist-electron/*.cjs
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
@@ -1041,7 +1164,7 @@ export default defineConfig({
   outDir: 'dist-electron',
   format: 'cjs',           // Electron requires CommonJS
   platform: 'node',
-  target: 'node18',
+  target: 'node20',
   splitting: false,
   sourcemap: true,
   clean: true,
@@ -1052,9 +1175,9 @@ export default defineConfig({
 ### Step 0.3: Create `electron-builder.yml`
 
 ```yaml
-appId: com.dprguide.pro
-productName: DPR Guide Pro
-copyright: Copyright © 2026 DPR Guide Pro
+appId: com.pmegp.dprgenerator
+productName: PMEGP DPR Generator
+copyright: Copyright © 2026 PMEGP DPR Generator
 
 directories:
   buildResources: build
@@ -1073,14 +1196,14 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: DPR Guide Pro
+  shortcutName: PMEGP DPR Generator
   installerIcon: build/icon.ico
   uninstallerIcon: build/icon.ico
-  artifactName: DPR-Guide-Pro-Setup-${version}.${ext}
+  artifactName: PMEGP-DPR-Generator-Setup-${version}.${ext}
 
 files:
   - dist-electron/**/*
-  - .next/**/*
+  - out/**/*
   - public/**/*
   - package.json
 
@@ -1120,7 +1243,7 @@ function createWindow() {
     trafficLightPosition: { x: 16, y: 16 }, // macOS buttons position
     icon: path.join(__dirname, '../build/icon.ico'),
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,   // ⭐ Security: sandbox enabled — all renderer access via preload IPC only
@@ -1259,7 +1382,7 @@ import { ipcMain, BrowserWindow, dialog, Notification } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import { app } from 'electron';
-import { exportDRPToExcel } from './excel-export';  // ⭐ Single authoritative Excel export engine
+import { exportDPRToExcel } from './excel-export';  // ⭐ Single authoritative Excel export engine
 
 // ─── Schema Migration (mirrored from dpr-types.ts) ───
 // The migration function lives in dpr-types.ts for the renderer,
@@ -1368,7 +1491,7 @@ export function setupIPCHandlers() {
     );
     if (!canceled && filePath) {
       const dprData = JSON.parse(data);
-      await exportDRPToExcel(dprData, filePath);
+      await exportDPRToExcel(dprData, filePath);
       return filePath;
     }
     return null;
@@ -1434,14 +1557,14 @@ export function createTray(mainWindow: BrowserWindow): Tray {
   const tray = new Tray(trayIcon);
 
   const contextMenu = Menu.buildFromTemplate([
-    { label: '🟢 Open DPR Guide Pro', click: () => mainWindow.show() },
+    { label: '🟢 Open PMEGP DPR Generator', click: () => mainWindow.show() },
     { type: 'separator' },
     { label: '📝 New DPR', click: () => { mainWindow.show(); mainWindow.webContents.send('action:new-dpr'); } },
     { type: 'separator' },
     { label: '❌ Quit', click: () => { isQuitting = true; app.quit(); } },
   ]);
 
-  tray.setToolTip('DPR Guide Pro — PMEGP Report Builder');
+  tray.setToolTip('PMEGP DPR Generator — PMEGP Report Builder');
   tray.setContextMenu(contextMenu);
 
   tray.on('double-click', () => {
@@ -1464,19 +1587,11 @@ export function getWindow(): BrowserWindow | null {
 }
 ```
 
-### Step 0.9: Generate Windows App Icon
+### Step 0.9: Windows App Icon Requirement
 
-Use the existing `dpr-logo.png` to create `build/icon.ico`:
+Required asset: `build/icon.ico`, generated from `dpr-logo.png` or another approved product icon.
 
-```bash
-# Install icon converter
-bun add -d icon-gen
-
-# Then in a script, convert PNG to ICO:
-npx icon-gen --input public/dpr-logo.png --output build/ --report
-```
-
-Or manually create a 256x256 `.ico` file from `dpr-logo.png` using any online converter, and place it at `build/icon.ico`.
+The icon should include Windows-compatible sizes such as 256×256 and be used for the app, installer, and uninstaller.
 
 ### Step 0.10: Update `next.config.ts` for Electron
 
@@ -2481,7 +2596,7 @@ export function generateDPRReportHTML(dprData: DPRData): string {
   <div class="subtitle">Under Prime Minister's Employment Generation Programme (PMEGP)</div>
   <div class="project-name">${dprData.project?.projectName || '—'}</div>
   <div class="promoter">Promoter: ${dprData.applicant?.name || '—'}</div>
-  <div class="promoter">Prepared by: DPR Guide Pro</div>
+  <div class="promoter">Prepared by: PMEGP DPR Generator</div>
   <div class="promoter">Date: ${new Date().toLocaleDateString('en-IN')}</div>
 </div>
 
@@ -2550,7 +2665,7 @@ export function generateDPRReportHTML(dprData: DPRData): string {
 <!-- DISCLAIMER -->
 <div class="section-divider"></div>
 <div style="margin-top:24px;padding:12px;background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;font-size:9pt;">
-  <strong>Disclaimer:</strong> This Detailed Project Report has been generated by DPR Guide Pro software for the purpose of supporting a PMEGP loan application.
+  <strong>Disclaimer:</strong> This Detailed Project Report has been generated by PMEGP DPR Generator software for the purpose of supporting a PMEGP loan application.
   The financial projections are estimates based on the data provided by the applicant. Actual results may vary.
   Applicants are advised to verify all figures with a qualified Chartered Accountant before submission to the bank.
   The Margin Money (subsidy) is subject to approval by the Implementing Agency (KVIC/KVIB/DIC) and is held in TDR during the 3-year lock-in period.
@@ -2573,7 +2688,9 @@ export function generateDPRReportHTML(dprData: DPRData): string {
 
 ## 🤖 UPDATED AI SYSTEM PROMPT — `src/lib/ai-system-prompt.ts`
 
-> This replaces the old AI system prompt with a complete PMEGP-aware version. The AI assistant uses this prompt to answer all questions accurately based on scheme rules.
+> This replaces the old AI system prompt with a complete PMEGP-aware version. The AI assistant uses this prompt to answer questions accurately based on scheme rules and to guide DPR data collection.
+>
+> **Important AI interview rule**: When helping create or autofill a DPR, the AI should first ask for missing required business/DPR information. After the user answers, the AI may extract candidate values into structured `DPRData`, but the app must validate and calculate using `pmegp-rules.ts`, `dpr-calculations.ts`, and/or verified workbook formulas. AI is not the final calculation authority.
 
 ```typescript
 // src/lib/ai-system-prompt.ts
@@ -2608,16 +2725,30 @@ export function getDPRSystemPrompt(dprData: any): string {
   const maxSvc2nd = formatCurrencyShort(MAX_PROJECT_COST.SECOND_LOAN[SECTOR.SERVICE]);
   const capUtil = CAPACITY_UTILIZATION.map(r => `${(r * 100).toFixed(0)}%`).join(', ');
 
-  return `You are "DPR Guide Pro AI" — an expert assistant for the PMEGP (Prime Minister's Employment Generation Programme) scheme by the Government of India, Ministry of MSME, administered by KVIC.
+  return `You are "PMEGP DPR Generator AI" — an unofficial PMEGP/DPR support assistant for a Windows desktop DPR generator.
+
+## YOUR PRIMARY DPR INTERVIEW ROLE:
+
+When the user wants to create, autofill, review, or complete a DPR, do not jump straight to calculations. First ask for missing required DPR/business information. Convert the user's answers into candidate structured DPR data only after the required fields are clear. Always show AI-suggested values as draft values that require user confirmation before insertion.
+
+Required question categories include:
+- Project name, activity description, manufacturing/service sector, rural/urban location.
+- Applicant/promoter details, gender, category, location, qualification, constitution/legal status.
+- Project cost required, bank loan amount required, first loan or second loan/upgradation.
+- Building owned/rented/leased, building cost or rent/lease cost.
+- Machinery/equipment, furniture/fixtures, preliminary expenses, contingency, and working capital.
+- Raw material, consumables, labor/wages, staff salaries, utilities, transport, marketing/admin costs.
+- Sales capacity, selling price, capacity utilization, monthly/annual sales assumptions.
+- Any field needed by PMEGP subsidy, own contribution, eligibility, or workbook formulas.
+
+If required data is missing, ambiguous, or conflicts with PMEGP/workbook rules, ask a follow-up question or show a validation warning. Do not guess silently.
 
 ## YOUR KNOWLEDGE BASE:
 
 ### PMEGP Scheme Overview
-- Credit-linked subsidy scheme launched 15 Aug 2008
-- Central sector scheme under Ministry of MSME
-- Nodal Agency: KVIC (Khadi and Village Industries Commission)
-- Current period: FY 2021-22 to FY 2025-26 (may be extended to FY 2026-27 — check latest KVIC notification)
-- Only for NEW micro-enterprises in non-farm sector
+- PMEGP is a credit-linked subsidy scheme for new micro-enterprises in the non-farm sector.
+- PMEGP is not a direct loan: the bank sanctions finance and the government subsidy is routed through the bank.
+- The app must use verified PMEGP/workbook rules for subsidy, own contribution, project limits, EDP, negative list, and workbook mapping.
 - Official portal: kviconline.gov.in/pmegpeportal
 
 ### Maximum Project Cost
@@ -2680,33 +2811,33 @@ export function getDPRSystemPrompt(dprData: any): string {
 ### Current DPR Data:
 ${JSON.stringify(dprData, null, 2)}
 
-## YOUR BEHAVIOR — MANDATORY RULES:
+## YOUR BEHAVIOR — BOUNDARIES AND RESPONSIBLE GUIDANCE:
 
-### Proactive Warnings (MUST DO automatically):
-1. **Women = Special Category**: If Gender=Female, IMMEDIATELY tell her: "As a woman, you automatically qualify for Special Category subsidy — even if your social category is General! This means you get ${subsidySpecialUrban.toFixed(0)}% (Urban) or ${subsidySpecialRural.toFixed(0)}% (Rural) instead of ${subsidyGeneralMaleUrban.toFixed(0)}%/${subsidyGeneralMaleRural.toFixed(0)}%."
-2. **Negative List Check**: When user mentions a business activity, CHECK against the negative list and warn with the REASON (e.g., "Meat processing is not allowed due to socio-religious sensitivity")
-3. **Land Cost Warning**: If any cost item mentions "land" or "plot", WARN: "Land cost CANNOT be included in project cost — this is a COMMON REJECTION REASON"
-4. **Project Cost Limit Warning**: If cost exceeds ${maxMfg1st} (Mfg) or ${maxSvc1st} (Svc), warn that excess portion gets NO subsidy
-5. **Category Mismatch Warning**: If user selects Female + General category, auto-correct: "Women are Special Category — your subsidy will be calculated at Special rates"
-6. **Common Mistakes Checklist**: Before user submits/export, show ALL 10 common rejection reasons and verify each one
+### Proactive Warnings (Use when verified data indicates a risk):
+1. **Women = Special Category**: If Gender=Female and category is General, explain that women are treated as Special Category in the workbook/rules. Show the applicable special-category subsidy rates and note that final eligibility should be verified.
+2. **Negative List Check**: When user mentions a business activity, check against the verified negative list and warn with the reason when available.
+3. **Land Cost Warning**: If any cost item mentions "land" or "plot", warn that land cost should not be included in project cost and ask the user to verify with the current workbook/official rule.
+4. **Project Cost Limit Warning**: If cost exceeds ${maxMfg1st} (Mfg) or ${maxSvc1st} (Svc), warn that subsidy may apply only to the verified eligible portion.
+5. **Category Mismatch Warning**: If user selects Female + General category, explain the special-category treatment before calculating subsidy.
+6. **Common Mistakes Checklist**: Before export, show relevant rejection-risk checks from the verified checklist.
 
-### Explanations (MUST EXPLAIN when asked):
-7. **How Subsidy Math Works**: Explain clearly: "PMEGP is NOT a direct loan. You pay ${ownContribSpecial.toFixed(0)}-${ownContribGeneral.toFixed(0)}% from your pocket. Bank sanctions the rest. X% of that is government Margin Money, routed through the bank and held in your account/TDR for 3 years. During lock-in, your liability is the FULL sanctioned amount. After 3 years + physical verification, the Margin Money is adjusted (written off) and your net liability reduces. You then repay only the net liability after lock-in."
-8. **Scheme Comparison**: If user asks "Should I do PMEGP or MUDRA?", explain: PMEGP = subsidy, MUDRA = no subsidy but faster. For new businesses needing subsidy → PMEGP is best.
-9. **Application Process**: Guide through all 12 steps from portal visit to disbursement
-10. **Collateral Rights**: Tell users: "Up to ₹10L = NO collateral. Up to ₹2Cr = INSIST on CGTMSE. Don't let bank force property collateral."
-11. **EDP Training**: Calculate requirement based on project cost, link to udyami.org.in for online EDP, remind it's FREE
-12. **Lock-in Process**: Walk through 7-step subsidy adjustment process
+### Explanations (Provide only when asked or when directly relevant):
+7. **How Subsidy Math Works**: Explain that PMEGP is not a direct loan: the bank sanctions the loan, the government subsidy is routed through the bank, and during lock-in the borrower remains liable for the full sanctioned amount until verified adjustment. Avoid promising approval.
+8. **Scheme Comparison**: If user asks "Should I do PMEGP or MUDRA?", provide only verified, general comparison and recommend checking current official terms.
+9. **Application Process**: Provide only the implementation-relevant workflow: eligibility → DPR data entry → validation → calculation → export → official portal/bank submission.
+10. **Collateral/CGTMSE**: Explain only verified general guidance up to ₹10L and CGTMSE coverage up to ₹2Cr, with bank/current-rule verification required.
+11. **EDP Training**: Calculate requirement based on verified project-cost thresholds and mention official EDP sources when available.
+12. **Lock-in Process**: Explain the subsidy adjustment process as general guidance and mark unverified details.
 
-### Accuracy Rules (MUST FOLLOW):
-13. Always quote EXACT subsidy rates based on Gender+Category+Location — use the rates above, which come from pmegp-rules.ts
-14. Use Indian numbering system (Lakhs/Crores) for all amounts
-15. Format currency as ₹XX,XX,XXX (Indian format)
-16. Suggest realistic interest rates: 8-10% for PSU banks, 10-14% for private banks
-17. Reference 2023 revised guidelines: Transgender category, geo-tagging, 2nd loan, online EDP
-18. Be encouraging but accurate — don't promise subsidy that doesn't apply
-19. Maximum subsidy caps: Manufacturing max ₹17.5L, Service max ₹7L
-20. If project cost exceeds limits, explain that excess gets no subsidy`;
+### Accuracy Rules (Follow):
+13. Quote subsidy rates only from `pmegp-rules.ts`, workbook-derived rule data, or verified official sources.
+14. Use Indian numbering system (Lakhs/Crores) for all amounts.
+15. Format currency as ₹XX,XX,XXX (Indian format).
+16. Suggest realistic interest rates only as ranges/examples, not guarantees.
+17. Reference 2023 revised guidelines only when verified: Transgender category, geo-tagging, 2nd loan, online EDP.
+18. Be accurate and neutral — never promise subsidy, approval, or collateral-free treatment.
+19. Maximum subsidy caps: Manufacturing max ₹17.5L, Service max ₹7L, subject to official verification.
+20. If project cost exceeds limits, explain that excess may not receive subsidy and should be verified.`;
 }
 ```
 
@@ -2718,7 +2849,7 @@ ${JSON.stringify(dprData, null, 2)}
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│  🏠 DPR Guide Pro — Dashboard                                    │
+│  🏠 PMEGP DPR Generator — Dashboard                                    │
 │                                                                    │
 │  ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐    │
 │  │  📊 Project Cost │  💰 Your Subsidy  │  🏦 Bank Loan    │    │
@@ -3139,7 +3270,7 @@ export function Titlebar() {
       <div className="flex items-center gap-2 px-3">
         <img src="/dpr-logo.png" alt="DPR" className="w-5 h-5 rounded" />
         <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-          DPR Guide Pro
+          PMEGP DPR Generator
         </span>
       </div>
 
@@ -3316,9 +3447,9 @@ Simplified Excel export with the same data fields as the legacy DPRPACKAGE.xls �
 // electron/excel-export.ts
 import ExcelJS from 'exceljs';
 
-export async function exportDRPToExcel(dprData: any, filePath: string): Promise<void> {
+export async function exportDPRToExcel(dprData: any, filePath: string): Promise<void> {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'DPR Guide Pro';
+  workbook.creator = 'PMEGP DPR Generator';
   workbook.created = new Date();
 
   // ── Sheet 1: DataSheet ──
@@ -3492,7 +3623,7 @@ export async function exportDRPToExcel(dprData: any, filePath: string): Promise<
   const front = workbook.addWorksheet('DPR_FRONT');
   front.addRow(['Project Report on', dprData.project?.projectName]);
   front.addRow(['Promoter:', dprData.applicant?.name]);
-  front.addRow(['Prepared By:', 'DPR Guide Pro']);
+  front.addRow(['Prepared By:', 'PMEGP DPR Generator']);
   front.addRow(['Date:', new Date().toLocaleDateString('en-IN')]);
 
   await workbook.xlsx.writeFile(filePath);
@@ -3504,8 +3635,8 @@ export async function exportDRPToExcel(dprData: any, filePath: string): Promise<
 ## 🔄 COMPLETE BUILD ORDER (UPDATED FOR ELECTRON)
 
 ### Phase 0: Electron Setup (DO THIS FIRST!)
-1. Install dependencies: `bun add -d electron electron-builder concurrently wait-on tsup`
-2. Install: `bun add exceljs openai`
+1. Install dependencies: `npm install -D electron electron-builder concurrently wait-on tsup`
+2. Install: `npm install exceljs openai`
 3. Update `package.json` with scripts and build config
 4. Create `electron-builder.yml`
 5. Create `electron/main.ts`
@@ -3516,7 +3647,7 @@ export async function exportDRPToExcel(dprData: any, filePath: string): Promise<
 10. Create `build/icon.ico` from `dpr-logo.png`
 11. Update `next.config.ts` with `output: 'export'`
 12. Create `src/hooks/use-electron.ts`
-13. **TEST**: `bun run dev:electron` — verify window opens with Next.js content
+13. **TEST**: `npm run dev:electron` — verify window opens with Next.js content
 
 ### Phase 0.5: PMEGP Rules Engine (BEFORE Phase 1!)
 14. `src/lib/pmegp-rules.ts` — **⭐ CREATE THIS FIRST** (all other files import from it)
@@ -3553,10 +3684,10 @@ export async function exportDRPToExcel(dprData: any, filePath: string): Promise<
 48. `src/app/page.tsx` — Render AppShell
 
 ### Phase 7: Build & Package
-49. Build Next.js: `bun run build` (creates `out/` folder)
-50. Compile Electron: `bun run build:electron` (uses tsup → outputs to dist-electron/)
-51. Package: `electron-builder --win`
-52. Output: `dist/DPR-Guide-Pro-Setup-1.0.0.exe` ✅
+49. Build Next.js: `npm run build` (creates `out/` folder)
+50. Compile Electron: `npm run build:electron` (uses tsup → outputs to dist-electron/)
+51. Package: `npm run build:win`
+52. Output: `dist/PMEGP-DPR-Generator-Setup-1.0.0.exe` ✅
 
 ---
 
@@ -3726,7 +3857,7 @@ export const EXAMPLE_DPR_MANUFACTURING: DPRData = {
 ### Setup
 
 ```bash
-bun add -d vitest
+npm install -D vitest
 ```
 
 ### Test Files Required
@@ -3766,8 +3897,8 @@ src/__tests__/
 ### Run Command
 
 ```bash
-bun run test        # Runs vitest
-bun run test:watch  # Watch mode
+npm run test        # Runs vitest
+npm run test:watch  # Watch mode
 ```
 
 Add to `package.json` scripts:
@@ -3788,7 +3919,7 @@ Add to `package.json` scripts:
 7. **File save/load** uses native Windows dialogs — not browser downloads
 8. **App icon** must be `.ico` format for Windows (256x256)
 9. **NSIS installer** creates proper Windows installer (.exe) with Start Menu shortcut
-10. **Test with `bun run dev:electron`** — NOT just `bun run dev`
+10. **Test with `npm run dev:electron`** — NOT just `npm run dev`
 11. **Only `/` route** — everything is client-side via Zustand state
 12. **Format all currency** as Indian: `₹12,50,000` (use `Intl.NumberFormat('en-IN')`)
 13. **Persist data** via Zustand `persist` middleware + local file save
@@ -3816,11 +3947,17 @@ Report Model (DPRData with computed fields)
 Excel Export Engine (electron/excel-export.ts)
     ↓ reads model, writes file — NO calculations here
 
-AI Layer (parallel)
-    ↓
+AI Interview & Autofill Layer (parallel, user-guided)
+    ↓ asks missing required DPR/business questions
+Candidate DPRData Extractor (src/lib/ai-interview/)
+    ↓ candidate values, never final calculations
+Validation Engine + Calculation Engine
+    ↓ deterministic PMEGP/workbook-derived results
+User Confirmation for Critical Draft Changes
+    ↓ accepted values update DPR store
 Prompt Builder (src/lib/ai/prompt-builder.ts)
     ↓ structured prompt
-Knowledge Base (pmegp-rules + dpr-types)
+Knowledge Base (pmegp-rules + dpr-types + verified workbook metadata)
     ↓ context injection
 Conversation Manager (src/lib/ai/conversation-manager.ts)
     ↓ token-budgeted messages
@@ -3915,6 +4052,8 @@ export function runAllValidations(dprData: Partial<DPRData>): ValidationResult {
 | `ai:chat` | `{ messages, dprData, config: { apiKey?, baseURL?, model? } }` | `{ success, response }` | `AI_FAILURE` |
 | `ai:test` | `{ config: { apiKey?, baseURL?, model? } }` | `{ success, message, latencyMs }` | `AI_FAILURE` |
 | `ai:suggest` | `{ fieldName, context, projectType }` | `{ success, suggestion }` | `AI_FAILURE` |
+
+AI interview and autofill behavior is product-layer logic: ask required DPR questions, produce candidate structured `DPRData`, validate, calculate, and request user confirmation for critical changes. The IPC channel names above are implementation details and may be renamed if the implementation keeps the old `ai:ask` naming; the important rule is that all AI calls go through Electron IPC, never renderer fetch/API routes.
 
 ---
 
@@ -4116,7 +4255,7 @@ export const FORMULAS = {
 
 ## 🤖 AI ASSISTANT ARCHITECTURE — `src/lib/ai/`
 
-> The AI layer is structured for production use: prompt versioning, conversation management, token budgets, error recovery, and context compression.
+> The AI layer is structured for production use: prompt versioning, conversation management, token budgets, error recovery, and context compression. It supports the AI interview flow, but it must not become the final calculation authority.
 
 ```
 src/lib/ai/
@@ -4125,9 +4264,29 @@ src/lib/ai/
 ├── context-compressor.ts      # Compresses long DPR data into concise context for AI
 ├── ai-error-handler.ts        # Retry logic, rate limiting, failure recovery
 └── token-budget.ts            # Token budget rules (max context, max response, truncation thresholds)
+
+src/lib/ai-interview/
+├── interview-schema.ts        # Required-question definitions for AI autofill
+├── extractor.ts               # Converts AI/user answers into candidate DPRData
+└── confirmation.ts            # Draft-value review and critical-field confirmation rules
 ```
 
 ```typescript
+// src/lib/ai-interview/interview-schema.ts
+// Required-question schema for AI interview and autofill
+
+export const REQUIRED_DPR_QUESTION_GROUPS = [
+  'projectBasics',
+  'applicantPromoter',
+  'loanSubsidyInputs',
+  'premises',
+  'capitalExpenditure',
+  'workingCapital',
+  'laborWages',
+  'salesRevenue',
+  'financialAssumptions',
+] as const;
+
 // src/lib/ai/prompt-builder.ts
 // Version-controlled system prompt construction
 
@@ -4137,6 +4296,7 @@ export function buildSystemPrompt(dprData: Partial<DPRData>): string {
   // Combines PMEGP knowledge base + current DPR form data into structured prompt
   // Uses token-budget to stay within limits
   // Returns version-tagged prompt for audit logging
+  // Must instruct AI to ask missing required DPR questions before suggesting autofill values
 }
 
 // src/lib/ai/conversation-manager.ts
@@ -4150,6 +4310,30 @@ export class ConversationManager {
   truncateToBudget(): void;                  // Removes oldest messages if over budget
   exportConversation(): string;              // For persistence
   importConversation(json: string): void;    // Restore from save
+}
+
+// src/lib/ai-interview/extractor.ts
+export function extractCandidateDPRData(answer: string, existingData: Partial<DPRData>): Partial<DPRData> {
+  // Extracts candidate structured values from natural-language answers.
+  // Does not calculate subsidy, loan, DSCR, BEP, or workbook values.
+  // Returns draft values that require validation and user confirmation.
+}
+
+// src/lib/ai-interview/confirmation.ts
+export const CRITICAL_DPR_FIELDS = [
+  'projectCost',
+  'bankLoan',
+  'subsidyAmt',
+  'ownContributionAmt',
+  'machineryItems',
+  'buildingItems',
+  'rawMaterialItems',
+  'laborItems',
+  'salesItems',
+] as const;
+
+export function requiresUserConfirmation(fieldName: string): boolean {
+  return CRITICAL_DPR_FIELDS.includes(fieldName as any);
 }
 
 // src/lib/ai/ai-error-handler.ts
@@ -4237,7 +4421,7 @@ ipcMain.handle('file:export-excel', async (e, data: string) => {
 
 After the complete build, the agent should produce:
 
-1. **`DPR-Guide-Pro-Setup-1.0.0.exe`** (~80-120MB) — Windows installer
+1. **`PMEGP-DPR-Generator-Setup-1.0.0.exe`** (~80-120MB) — Windows installer
    - NSIS installer with custom banners
    - Desktop shortcut
    - Start Menu shortcut
@@ -4246,7 +4430,7 @@ After the complete build, the agent should produce:
 2. **Source code** — Complete project with all files listed above
 
 ### User Experience:
-1. Download `DPR-Guide-Pro-Setup-1.0.0.exe`
+1. Download `PMEGP-DPR-Generator-Setup-1.0.0.exe`
 2. Double-click to install
 3. Desktop shortcut appears
 4. Launch app → beautiful Windows 11-style window opens
