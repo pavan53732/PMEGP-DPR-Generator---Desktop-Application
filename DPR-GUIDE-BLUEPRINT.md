@@ -119,25 +119,38 @@ Before implementing export logic, inspect the actual workbook and record:
    - Other expenses
 
 5. **Export rule**
-   - Preferred export: load/copy `DPRPACKAGE.xls`, populate verified cells/ranges, preserve formulas/formatting where valid.
-   - Fallback export: generate a new workbook with equivalent sheets/fields only when `.xls` template editing is not technically feasible.
+   - **Canonical official export:** template-fill. Load the audited `DPRPACKAGE.xls`/`.xlsx` template, populate verified input cells/ranges, preserve formulas/formatting/print layout, then save as a new file.
+   - Fallback export: generate a simplified workbook only when official template preservation is not technically feasible.
    - Every exported field must be traceable to a workbook cell/range or documented as a new app-added field.
+   - ExcelJS-from-scratch export is **not** workbook-equivalent for official DPR output because the workbook contains 1,588 merged ranges and complex printable layouts.
 
 ### 3.3 Workbook Formula Audit and Canonical Formula Policy
 
+Deep workbook audit status: LibreOffice-converted `.xlsx` formula extraction verified the primary DataSheet selector cells and subsidy formulas. Claims below are based on that audit and should still be rechecked against the original `.xls` behavior before final release.
 
 For each formula, document the workbook source, intended rule, and app policy.
 
 | Formula | Workbook Cell | Current Template Formula | Intended Rule | App Policy |
 |---|---|---|---|---|
-| Subsidy rate | `G87` | verify from workbook | 15/25/35 logic based on gender/category/location | Canonical if verified |
-| Subsidy helper | `R59` | appears inconsistent with G87 | should match G87 | Override/document if broken |
-| Subsidy helper | `R60` | appears to use wrong refs | should use `M55/M70/M64` | Override/document if broken |
-| Coir check | `L25` | includes `M59` check | does not affect subsidy rate | Ignore for subsidy calculation |
+| Gender selector | `M55` | input/index value | 1=Male, 2=Female, 3=Transgender | ✅ Verified from workbook labels/checkmark formulas/lookup list |
+| Sponsoring agency selector | `M59` | input/index value | 1=KVIC, 2=KVIB, 3=DIC, 4=COIR Board | ✅ Verified from workbook labels/checkmark formulas/lookup list |
+| Location selector | `M64` | input/index value | 1=Rural, 2=Urban | ✅ Verified from workbook labels/checkmark formulas/lookup list |
+| Category selector | `M70` | input/index value | 1=SC, 2=ST, 3=OBC, 4=PHC, 5=Ex-Serviceman, 6=Minority, 7=Hill Border Area, 8=Aspirational Districts, 9=General | ✅ Verified from workbook labels/checkmark formulas/lookup list |
+| Sector selector | `M80` | input/index value | 1=Manufacturing, 2=Service | ✅ Verified from workbook labels/checkmark formulas/lookup list |
+| Own contribution | `G85` | `=IF(AND(DataSheet!M55=1,DataSheet!M70=9),10%,5%)` | Male+General = 10%; all others = 5% | ✅ Canonical subsidy/finance formula |
+| Bank finance | `G86` | `=100%-G85` | Complement of own contribution | ✅ Canonical subsidy/finance formula |
+| Subsidy rate | `G87` | `=IF(DataSheet!M64=2,IF(AND(DataSheet!M55=1,DataSheet!M70=9),15%,25%),IF(AND(DataSheet!M55=1,DataSheet!M70=9),25%,35%))` | 15/25/35 logic based on location, gender, and category | ✅ Canonical subsidy formula |
+| Parallel subsidy calc | `L25` | `=IF(DataSheet!M59=4,IF(AND(DataSheet!M56=1,DataSheet!M70=8),15%,25%),IF(AND(DataSheet!M56=1,DataSheet!M70=8),25%,35%))` | Uses Coir Board branch but references `M56` and `M70=8`; not consumed by output | ❌ Non-canonical / ignore for subsidy calculation |
+| Legacy helper | `R57` | `=IF(M64=2,IF(AND(M55=1,M70=9),15,25),IF(AND(M55=1,M70=9),25,35))` | Whole-number duplicate of G87 | ❌ Non-canonical helper |
+| Partial helper | `R58` | `=IF(AND(M55=1,M70=9,M64=2),15,25)` | Partial urban check | ❌ Non-canonical helper |
+| Inconsistent helper | `R59` | `=IF(AND(M55=1,M64=1,M70=9),35,25)` | Conflicts with G87 for Rural Male General: R59 returns 35 while G87 returns 25 | ❌ Non-canonical helper |
+| Broken helper | `R60` | `=IF(AND(M57=1,M72=9,M66=2),15,0)` | References non-input cells; returns 0 | ❌ Broken/dead formula |
 
 Policy:
 
 - Preserve valid `DPRPACKAGE.xls` formulas for export fidelity.
+- Use `G85`, `G86`, and `G87` as the audited canonical workbook formulas for own contribution, bank finance, and subsidy rate.
+- Do **not** use `L25`, `R57`, `R58`, `R59`, or `R60` as subsidy authority.
 - Use audited canonical formulas for known broken or ambiguous workbook formulas.
 - Document every deviation from the workbook formula.
 - Add tests for workbook load success, no unresolved `#REF!` in exported files, G87-equivalent subsidy logic, project-cost-limit handling, second-loan subsidy caps, and R59/R60 discrepancy handling.
@@ -884,17 +897,20 @@ The app must not claim that any bank offers the “best” PMEGP rate. Interest-
 
 | Sheet | Cell | Issue | App Fix |
 |-------|------|-------|---------|
-| Project_Report | G14 | Father's/Spouse's Name reference broken | Add Father's Name field |
-| Project_Report | J20 | State reference broken | Add State dropdown |
-| Project_Report | H21 | Phone reference broken | Add Phone field |
-| Project_Report | H22 | Email reference broken | Add Email field |
-| DPR_FRONT | B33 | Prepared By name broken | Add Prepared By field |
-| DPR_FRONT | B35 | Agency broken | Add Agency field |
-| DPR_FRONT | B36 | Address broken | Add Address field |
-| DPR_FRONT | B37 | City reference broken | Add City field |
-| DPR_FRONT | F37 | State reference broken | Add State dropdown |
+| DataSheet | M36 | Broken lookup formula `=L59:L62` produces `#VALUE!`; likely intended agency-name lookup but not canonical | Compute selected agency directly from `M59`/lookup list |
+| Project_Report | G14 | Original source reference lost; surrounding label indicates Father's/Spouse's Name | Add direct Father's/Spouse's Name input field |
+| Project_Report | J20 | Original source reference lost; surrounding label indicates State | Add direct State input/dropdown field |
+| Project_Report | H21 | Original source reference lost; surrounding label indicates Phone | Add direct Phone field |
+| Project_Report | H22 | Original source reference lost; surrounding label indicates Email | Add direct Email field |
+| DPR_FRONT | B33 | Original source reference lost; below “Prepared By:” | Add direct prepared-by/office field |
+| DPR_FRONT | B35 | Original source reference lost; agency block | Add direct agency address line field |
+| DPR_FRONT | B36 | Original source reference lost; agency block | Add direct agency address line field |
+| DPR_FRONT | B37 | Original source reference lost; city/district block | Add direct city/district field |
+| DPR_FRONT | F37 | Original source reference lost; explicit `State:` label | Add direct state field |
 
-The app MUST provide its own input fields for: father's name, phone, email, state dropdown, prepared-by info, and city.
+The app MUST provide direct input fields for these broken-reference values. The audit can infer probable meanings from surrounding labels, but the original source cell references are permanently lost for `#REF!` cells.
+
+`DPR_print!F333:I333`, `F386:I386`, `F388:I388`, `F390:I390`, `F392:I392`, and `F394:I394` produce `#DIV/0!` with empty template data. These are structurally valid formulas for DSCR, BEP, break-even sales/units, current ratio, and net profit ratio, but the app/export must handle division-by-zero gracefully.
 
 ---
 
@@ -904,27 +920,33 @@ The app MUST provide its own input fields for: father's name, phone, email, stat
 #### 21.1 Cell L25 vs G87 Subsidy Formula
 
 
-The following subsidy-cell notes are provisional until the workbook is audited.
+The following subsidy-cell notes are based on the deeper workbook audit. `G87` is the audited canonical subsidy formula. `L25` is **not** canonical.
 
-Cell L25 appears to have a M59 (Coir Board) check that does not directly affect the subsidy rate. The suspected real subsidy formula is in G87:
+`L25` contains:
 
 ```excel
-=IF(M64=2, IF(AND(M55=1,M70=9), 15%, 25%), IF(AND(M55=1,M70=9), 25%, 35%))
+=IF(DataSheet!M59=4,IF(AND(DataSheet!M56=1,DataSheet!M70=8),15%,25%),IF(AND(DataSheet!M56=1,DataSheet!M70=8),25%,35%))
 ```
 
-The app should use the audited G87-equivalent logic, not an unverified helper cell.
+It references `M59=4` (COIR Board branch), but it uses `M56`, which is empty, and `M70=8` (Aspirational Districts) instead of `M55`/Gender and `M70=9`/General. It is not consumed by output formulas. Therefore, the app must use `G87` exclusively for subsidy rate calculation.
+
+`G87` formula:
+
+```excel
+=IF(DataSheet!M64=2,IF(AND(DataSheet!M55=1,DataSheet!M70=9),15%,25%),IF(AND(DataSheet!M55=1,DataSheet!M70=9),25%,35%))
+```
 
 #### 21.2 R57:R60 Reference Tables
 
 
-These cells must be verified from the actual workbook before being treated as canonical.
+These cells are verified helper/reference formulas, not primary calculation authority. Do not use them as subsidy authority.
 
-| Cell | Suspected Formula | Meaning | App Policy |
+| Cell | Verified Formula | Meaning | App Policy |
 |------|---------|---------|------------|
-| R57 | `=IF(M64=2,IF(AND(M55=1,M70=9),15,25),IF(AND(M55=1,M70=9),25,35))` | Full subsidy rate | Use only if verified |
-| R58 | `=IF(AND(M55=1,M70=9,M64=2),15,25)` | Urban General Male = 15%, else 25% | Use only if verified |
-| R59 | `=IF(AND(M55=1,M64=1,M70=9),35,25)` | Suspected bug: may return 35% for Rural General Male | Override/document if workbook audit confirms mismatch |
-| R60 | `=IF(AND(M57=1,M72=9,M66=2),15,0)` | Suspected wrong refs | Override/document if workbook audit confirms mismatch |
+| R57 | `=IF(M64=2,IF(AND(M55=1,M70=9),15,25),IF(AND(M55=1,M70=9),25,35))` | Whole-number duplicate of G87 | ❌ Do not use; non-canonical helper |
+| R58 | `=IF(AND(M55=1,M70=9,M64=2),15,25)` | Partial urban check | ❌ Do not use; incomplete helper |
+| R59 | `=IF(AND(M55=1,M64=1,M70=9),35,25)` | ❌ Confirmed conflict: Rural Male General returns 35 while G87 returns 25 | ❌ Do not use; G87 is canonical |
+| R60 | `=IF(AND(M57=1,M72=9,M66=2),15,0)` | ❌ Broken/dead: M57/M72/M66 are not active input cells | ❌ Do not use; broken helper |
 
 ---
 
@@ -3485,9 +3507,9 @@ The Settings view now includes **desktop-specific** sections:
 ## 19. 📦 Phase 5: Excel Export — `electron/excel-export.ts`
 
 
-> **⚠️ NOTE**: This is the AUTHORITATIVE Excel export implementation — a simplified generator that outputs the same data fields as the legacy DPRPACKAGE.xls but does NOT reproduce its formatting, merged cells, formulas, or section behavior. The inline export in `ipc-handlers.ts` (Phase 0.6) is a quick-test stub. For production, refactor `ipc-handlers.ts` to call this function instead.
+> **Canonical export approach: template-fill.** Bundle the audited `DPRPACKAGE.xls` (or a verified `.xlsx` conversion) as the export template. At export time: load the template → write verified `DataSheet` input values and line-item data → let workbook formulas calculate where valid → save as a new file. This preserves the 1,588 merged ranges, formatting, print areas, and formulas. ExcelJS from-scratch recreation is not recommended for official DPR output because it does not reproduce official workbook fidelity unless every layout/formula/format detail is separately recreated and tested.
 
-Simplified Excel export with the same data fields as the legacy DPRPACKAGE.xls — but without reproducing its merged cells, formulas, conditional formatting, or section behavior. Data fields match `dpr-types.ts` (Phase 1):
+Simplified Excel export may still be useful for non-official analysis exports, but it should not be described as equivalent to the official DPRPACKAGE workbook.
 
 ```typescript
 // electron/excel-export.ts
@@ -4233,7 +4255,9 @@ export function calculateEMI(principal: number, annualRate: number, months: numb
 ## 30. 📐 Formula Governance — `src/lib/formula-registry.ts`
 
 
-> Single source of truth for ALL PMEGP formula metadata. **This file does NOT duplicate calculation logic** — it DELEGATES to `pmegp-rules.ts` and `dpr-calculations.ts` for actual computation. It provides metadata (source references, thresholds, units) so that UI components and export code can look up formula properties without importing the calculation functions directly.
+> Single source of truth for audited PMEGP formula metadata. **This file does NOT duplicate calculation logic** — it delegates to `pmegp-rules.ts` and `dpr-calculations.ts` for actual computation. It provides metadata (source references, thresholds, units) so that UI components and export code can look up formula properties without importing the calculation functions directly.
+>
+> Authority chain: `Workbook Audit → Formula Registry → Calculation Engine`. Only formulas verified by workbook audit should be registered as canonical.
 
 ```typescript
 // src/lib/formula-registry.ts
@@ -4259,16 +4283,16 @@ export const FORMULAS = {
   SUBSIDY_RATE: {
     id: 'SUBSIDY_RATE',
     name: 'PMEGP Subsidy Rate',
-    source: 'KVIC DPRPACKAGE.xls Cell G87',
+    source: 'DPRPACKAGE.xls Cell G87 — audited canonical subsidy formula',
     calculate: calculateSubsidyRate,  // ⭐ Delegates to pmegp-rules.ts — single source of truth
-    description: 'Subsidy % based on Gender + Category + Location (15%/25%/35%)',
+    description: 'Subsidy % based on Location + Gender + Category. G87 returns 15%/25%/25%/35%; L25 and R57:R60 are non-canonical.',
   },
   OWN_CONTRIBUTION: {
     id: 'OWN_CONTRIBUTION',
     name: 'Own Contribution Rate',
-    source: 'KVIC DPRPACKAGE.xls Cell G85',
+    source: 'DPRPACKAGE.xls Cell G85 — audited canonical own contribution formula',
     calculate: calculateOwnContributionRate,  // ⭐ Delegates to pmegp-rules.ts
-    description: 'Own contribution % (5% Special / 10% General Male)',
+    description: 'Own contribution % from G85: 10% for Male+General, otherwise 5%',
   },
   SECOND_LOAN_SUBSIDY: {
     id: 'SECOND_LOAN_SUBSIDY',
