@@ -1,0 +1,92 @@
+# Node / dependencies
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build / output
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+
+# Audit scaffolding (one-off scripts that produced JSON/HTML reports)
+.stream_*/
+audit/
+audit-streams/
+audit-output/
+audit_data.json
+audit.html
+audit.html
+audit_xlsx.py
+audit-node.js
+audit_dprpackage.py
+audit_targeted.py
+audit_xlsx.py
+audit_direct.mjs
+audit_schema.js
+audit_schema_cjs.js
+audit_xls.py
+
+# Run/extract scripts
+*_trace.json
+*_trace.mjs
+analyze_logic.mjs
+build.js
+check-tools.py
+deep_analysis_comprehensive.py
+DEEP_AUDIT_REPORT.md
+DPR_AUDIT_SUMMARY.md
+excel-audit.html
+excel-audit.js
+excel_audit.py
+extract_lookups.mjs
+finance_trace.json
+forensic_deep.py
+full-audit.js
+full-audit.mjs
+full_extraction.mjs
+gen.js
+gen.mjs
+generate_guide_core.mjs
+generate_report.mjs
+GUIDE_APP_CORE.md
+logic_analysis.json
+lookup_tables.json
+page-snapshot.yml
+run-audit.html
+semantic_map.json
+semantic_trace.mjs
+stream_*.cjs
+stream_*.mjs
+test.b64
+trace_finance.mjs
+vba_check.py
+write.ps1
+_build.mjs
+_g.js
+_writer.mjs
+
+# IDE / tool state
+.playwright-mcp/
+.claude/
+.kilo/
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Stray accidentally-named file
+{const
+
+# Misc logs
+*.log
+
+# Stray audit build/update scripts (tool-generated, not source)
+stream_e.js
+update_blueprint.py
