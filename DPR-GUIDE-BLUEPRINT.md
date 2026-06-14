@@ -10250,7 +10250,7 @@ All numeric unlocked cells from `DPRPACKAGE-deeper-audit.json`:
 
 > - `P61` — possibly an output-side flag (paired with `M67` 2nd loan)
 
-> - `F179`, `F180` — possibly staff salary inputs (paired with the
+> - `F179`, `F180` � **RESOLVED 2026-06-14 (Cline 2nd-pass xlrd):** these are **payback period (years)** and **project implementation period (years)** cells, NOT staff salary inputs. Labels at B179 = "Pay back period" (default 5), B180 = "Project Implementation Period" (default 2). xlrd-verified: F179=5.0, F180=2.0, G180=12.0 are HARDCODED (xlrd ctype=number). App does NOT need to write by default; user can override in app. The "staff salary inputs paired with Labor block at B121+" hypothesis was the 1st-pass Kilo claim and is WRONG. See �15.4.9 (Means of Finance) and �17.3 (F179/F180/G180 hardcoded) for the verified mapping.
 
 >   `Labor` block at B121+)
 
@@ -10596,7 +10596,7 @@ meaning**. The AI semantic mapper MUST resolve these in the first
 
    than the M-col selectors — supporting the "sub-flag" hypothesis.)
 
-2. **`DataSheet!F179`, `F180`** — numeric, unlocked. Probably staff
+2. `DataSheet!F179`, `F180` — RESOLVED 2026-06-14: these are **payback period (years)** and **project implementation period (years)** cells, NOT staff salary inputs. The labels are at B179 ("Pay back period", default 5) and B180 ("Project Implementation Period", default 2). The xlrd Cline 2nd-pass scan confirmed F179=5.0 (number), F180=2.0 (number), G180=12.0 (number) are HARDCODED. App does NOT need to write by default; user can override in the app if a different value is needed. The "staff salary inputs" hypothesis was the 1st-pass Kilo claim and is **WRONG**. See §15.4.9 (Means of Finance) and §17.3 (F179/F180/G180 hardcoded) for the verified mapping.
 
    salary inputs. Verify from the `Labor` block at B121+.
 
@@ -10730,7 +10730,7 @@ interface WorkbookFieldMap {
 
   selectors: Record<string, FieldDef>;  // 9 input cells (Section 11.1)
 
-  lookups: Record<string, FieldDef>;    // 5 lookup tables (Section 11.2)
+  lookups: Record<string, FieldDef>;    // 8 canonical lookup tables (Cline-verified 2026-06-14, �18.1 supersedes the 1st-pass Kilo claim of 5 tables; the 11-table misclassification is also wrong)
 
   formulas: Record<string, FieldDef>;   // 3 canonical + 7 ignored (Section 11.3-11.4)
 
@@ -10978,11 +10978,11 @@ typed app field.
 
 - [ ] Section 11.1 (Selectors) — 9 verified cells with allowedValues
 
-      from the 5 lookup tables in Section 11.2
+      from the 8 canonical lookup tables in �18.1 (Cline-verified 2026-06-14)
 
 - [ ] Section 11.3 (Canonical formulas) — G85, G86, G87 readonly
 
-- [ ] Section 11.4 (Broken formulas) — **9 broken-reference cells** (4 in Project_Report + 5 in DPR_FRONT), plus 1 `#VALUE!` in DataSheet!M36
+- [ ] Section 11.4 (Broken formulas) — ? **10 broken-reference cells** (Cline xlrd-verified 2026-06-14: 4 in Project_Report + 5 in DPR_FRONT + 1 in DPR_print!B94), plus 1 `#VALUE!` in DataSheet!M36. **The "9 broken-reference cells" wording in earlier checklist items is now superseded; the correct count is 10 #REF! + 1 #VALUE! = 11 broken formula cells total.** See §26.4.
 
       collected as direct user input; M36 replaced with app logic
 
@@ -11806,10 +11806,10 @@ contingency_others_misc:   DataSheet!H74      (single currency)
 
 working_capital:
 
-  stock_in_process_days:   DataSheet!F146 (number, days)
-
-  finished_goods_days:     DataSheet!F148 (number, days)
-
+  # ? Cline-verified 2026-06-14: WC day-input cells are G-col, NOT F-col. Earlier F146/F148/F150 was the 1st-pass Kilo claim and is superseded. See �15.4.7 and �17.1.
+  stock_in_process_days:   DataSheet!G144 (number, days)   # was F146 (WRONG; 1st-pass Kilo claim)
+  finished_goods_days:     DataSheet!G146 (number, days)   # was F148 (WRONG; 1st-pass Kilo claim)
+  receivable_days:         DataSheet!G148 (number, days)   # was F150 (WRONG; 1st-pass Kilo claim)
   receivable_days:         DataSheet!F150 (number, days)
 
 
@@ -11852,9 +11852,9 @@ depreciation_building:     DataSheet!F176 (number, % per annum)
 
 depreciation_machinery:    DataSheet!F177 (number, % per annum)
 
-payback_period_years:     DataSheet!F179 (number, default 5)
+payback_period_years:     DataSheet!F179 (number, default 5)   # HARDCODED xlrd-verified 5.0; do NOT write by default (user can override)
 
-implementation_months:    DataSheet!F180 (number, default 2)
+implementation_months:    DataSheet!F180 (number, default 2)   # HARDCODED xlrd-verified 2.0; do NOT write by default (user can override)
 
 ```
 
@@ -12744,7 +12744,7 @@ Verified from PR section headings (row 414 section 19.2):
 
 - 5 financial assumption fields (Group 5)
 
-- 9 broken-reference cells in Project_Report/DPR_FRONT (Group 6) — `Project_Report!G14, J20, H21, H22` (4) + `DPR_FRONT!B33, B35, B36, B37, F37` (5) = 9. Gemini 3.1 Pro 2026-06-14 also noted `DPR_print!B94` is a 10th broken cell (`#REF!`); the App should provide a direct input field there too.
+- 10 broken-reference cells in Project_Report/DPR_FRONT/DPR_print (Group 6) — `Project_Report!G14, J20, H21, H22` (4) + `DPR_FRONT!B33, B35, B36, B37, F37` (5) + `DPR_print!B94` (1) = 10. **Cline xlrd-verified 2026-06-14:** the correct #REF! count is **10**, not 9 or 8.
 
 - 8+ narrative text cells in Project_Report (Group 7)
 
@@ -13436,7 +13436,7 @@ This is what DPR_print!H290 computes.
 
 | 9 | 11 non-canonical subsidy variants | Known | Already documented in Section 11.4 |
 
-| 10 | Empty interest rate / depreciation rate cells | Workbook design | Compute app-side, don't try to write to template |
+| 10 | F173/F176/F177 are EMPTY USER-INPUT cells (interest rate + building SLN + machinery WDV) | Verified Section 17.3 (Cline 2nd-pass xlrd 2026-06-14) | ? **App MUST write user values (default 11% interest, 5% building SLN, 15% machinery WDV) before export** so `DPR_print!B312` renders "Interest on Bank credit @ 11%" instead of "@ 0%". The earlier "Compute app-side, don't try to write to template" wording was the 1st-pass Kilo claim and is superseded. |
 
 
 
@@ -14568,14 +14568,14 @@ export function validateLandCost(landCost: number, totalProjectCost: number): Va
 
   if (landCost > 0 && totalProjectCost > 0) {
 
-    if (landCost / totalProjectCost > 0.05) {
-
-      warnings.push({
-
-        field: 'project.landCost',
-
-        severity: 'warning',
-
+    // ? **PMEGP absolute prohibition (Section 3.4 / 17.4):** Land cost CANNOT be included in the project cost, full stop. Earlier 0.05-threshold warning was a soft check that allowed up to 5% land to silently pass; the absolute rule says ANY land cost > 0 is a violation. The corrected logic below emits a hard error (not warning) for ANY landCost > 0. (The 0.05 threshold in the previous version has been removed.)
+    errors.push({
+      field: 'project.landCost',
+      severity: 'error',
+      code: AppErrorCode.VALIDATION_LAND_COST,
+      message: `Land cost (${formatCurrency(landCost)}) cannot be included in the PMEGP project cost. Per Section 3.4 absolute prohibition, land cost is non-eligible. Remove this line item from project cost calculation.`,
+      rule: 'PMEGP_LAND_COST_EXCLUDED',
+    });
         code: AppErrorCode.VALIDATION_LAND_COST,
 
         message: `Land cost (${formatCurrency(landCost)}) is more than 5% of project cost. PMEGP excludes land cost — verify this is development cost, not purchase cost.`,
@@ -14819,7 +14819,7 @@ must edit the workbook directly (not supported by the app).
 
 - [ ] **Section 10** — Audit Evidence Inventory loaded (22 JSONs)
 
-- [ ] **Section 11** — 9 verified selector cells, 8 canonical lookup tables (not 11, not 5!), 3 canonical formulas, 9 broken-reference cells (not 8!)
+- [ ] **Section 11** — 9 verified selector cells, 8 canonical lookup tables (not 11, not 5!), 3 canonical formulas, **10 broken-reference cells (Cline xlrd-verified 2026-06-14; was 9, now includes DPR_print!B94) + 1 #VALUE! cell in DataSheet!M36 = 11 broken formula cells total** (not 8!, not 9!; see §26.4)
 
 - [ ] **Section 12** — 8 verified line-item blocks, cross-sheet deps
 
