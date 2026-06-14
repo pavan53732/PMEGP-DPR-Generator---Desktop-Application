@@ -14775,6 +14775,8 @@ must edit the workbook directly (not supported by the app).
 
 
 
+> **External mapping companion file:** A separate `UNLOCKED-CELL-DPRDATA-MAPPING.md` (17.5 KB, committed alongside this blueprint) provides a per-cell **DPRData field-name mapping** for all 50 unlocked cells (21 DataSheet + 29 Project_Report) plus the 9 broken-reference write-target cells. The companion file was cross-checked against this blueprint on 2026-06-14 and 4 corrections were applied (see the cross-check footer in the companion file): M67 allowed-values order flipped, L25 marked as a formula not literal `0.35`, working-capital-day cells corrected from `F146/F148/F150` to `G144/G146/G148/G150`, and broken-reference field names collapsed to canonical DPRData field names (`fatherSpouseName`, `state`, `email` — no `2`/`OrSpouse` variants).
+
 ## 25. ✅ Final Updated Hand-off Checklist (replaces Section 14)
 
 
